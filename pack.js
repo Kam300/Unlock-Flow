@@ -55,6 +55,17 @@ if (fs.existsSync(parentCrx)) {
   console.log(`Updated: ${targetCrx}`);
 }
 
+// Create clean ZIP archive for GitHub Releases
+const targetZip = path.join(PROJECT_DIR, 'Unlock-Flow.zip');
+try {
+  const distFiles = ['manifest.json', 'background.js', 'hook.js', 'status.js', 'popup.html', 'popup.css', 'popup.js', 'icons', 'README.txt'];
+  const quotedFiles = distFiles.map(f => `'${path.join(PROJECT_DIR, f)}'`).join(',');
+  execSync(`powershell -NoProfile -Command "Compress-Archive -Path @(${quotedFiles}) -DestinationPath '${targetZip}' -Force"`);
+  console.log(`Created: ${targetZip}`);
+} catch (e) {
+  console.warn('Warning: Could not create ZIP:', e.message);
+}
+
 // Update updates.xml
 const xmlContent = `<?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
@@ -77,7 +88,7 @@ if (fs.existsSync(VERSION_JSON_PATH)) {
 console.log('\n--- SUCCESS ---');
 console.log(`App ID: ${appid}`);
 console.log(`Version: ${version}`);
-console.log(`Package: Unlock-Flow.crx`);
+console.log(`Packages: Unlock-Flow.crx & Unlock-Flow.zip`);
 console.log('Now you can run:');
 console.log('  git add .');
 console.log(`  git commit -m "Release v${version}"`);
