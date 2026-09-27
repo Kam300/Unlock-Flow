@@ -6,7 +6,7 @@
   const LANG_KEY = 'uf_lang';
   const DEFAULT_LANG = 'ru';
 
-  const UPDATE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/version.json';
+  const UPDATE_URL = 'https://raw.githubusercontent.com/TotalC0de/Unlock-Flow/main/version.json';
   const TG_CHANNEL = 'https://t.me/TotalC0de/483';
 
   const STRINGS = {
@@ -125,6 +125,8 @@
       modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
     } else if (type === 'new-ver') {
       modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>`;
+    } else if (type === 'error') {
+      modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
     } else {
       modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="8" r=".5" fill="currentColor"/></svg>`;
     }
@@ -279,7 +281,7 @@
       }
     } catch {
       openModal({
-        type: 'info',
+        type: 'error',
         title: `Unlock Flow v${currentVersion}`,
         bodyHtml: `<p>${t('modalError')}</p>`,
         actions: [
