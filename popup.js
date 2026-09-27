@@ -6,7 +6,7 @@
   const LANG_KEY = 'uf_lang';
   const DEFAULT_LANG = 'ru';
 
-  const UPDATE_URL = 'https://raw.githubusercontent.com/TotalC0de/Unlock-Flow/main/version.json';
+  const UPDATE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/version.json';
   const TG_CHANNEL = 'https://t.me/TotalC0de/483';
 
   const STRINGS = {

@@ -1,7 +1,7 @@
 {
   "version": "1.0.2",
   "downloadUrl": "https://t.me/TotalC0de/483",
-  "crxUrl": "https://raw.githubusercontent.com/TotalC0de/Unlock-Flow/main/Unlock-Flow.crx",
-  "updateUrl": "https://raw.githubusercontent.com/TotalC0de/Unlock-Flow/main/updates.xml",
+  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/Unlock-Flow.crx",
+  "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
   "changelog": "Исправлена маршрутизация, модальное окно версии и нативное автообновление Chrome"
 }

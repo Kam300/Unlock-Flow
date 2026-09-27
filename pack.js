@@ -59,7 +59,7 @@ if (fs.existsSync(parentCrx)) {
 const xmlContent = `<?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='${appid}'>
-    <updatecheck codebase='https://raw.githubusercontent.com/TotalC0de/Unlock-Flow/main/Unlock-Flow.crx' version='${version}' />
+    <updatecheck codebase='https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/Unlock-Flow.crx' version='${version}' />
   </app>
 </gupdate>
 `;
