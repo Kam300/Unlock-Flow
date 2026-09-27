@@ -1,0 +1,8 @@
+# Private key (CRITICAL: NEVER COMMIT THIS KEY)
+*.pem
+key.pem
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unlock flow</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <div class="topbar">
+      <div class="brand">
+        <img class="brand-icon" src="icons/icon32.png" alt="" width="28" height="28">
+        UF<span>UNLOCK FLOW</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="check-update" class="icon-btn" type="button" title="Проверить обновление" aria-label="Проверить обновление">
+          <svg class="update-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+        <div class="lang" role="group" aria-label="Language">
+          <button id="lang-ru" class="lang-btn" type="button">RU</button>
+          <button id="lang-en" class="lang-btn" type="button">EN</button>
+        </div>
+      </div>
+    </div>
+
+    <h1 id="title">Unlock flow</h1>
+    <p class="intro" id="intro"></p>
+
+    <section>
+      <label for="enabled">
+        <span id="toggle-label">Unlock Flow</span>
+        <input id="enabled" type="checkbox" role="switch" disabled>
+      </label>
+      <p id="status" role="status"></p>
+    </section>
+
+    <div class="tabs">
+      <button id="open" type="button"></button>
+      <button id="reload" class="secondary" type="button"></button>
+    </div>
+
+    <p id="error" role="alert"></p>
+
+    <a class="help" href="https://t.me/TotalC0de/483" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.138-1.294 3.785-1.518 3.973-1.546z"/>
+      </svg>
+      <span id="help-text"></span>
+    </a>
+
+    <footer>
+      Unlock flow · <button id="version-btn" class="link-btn" type="button" title="Проверить версию">v1.0.2</button> · by <a href="https://t.me/TotalCodeAdmin" target="_blank" rel="noopener noreferrer">@TotalCodeAdmin</a>
+    </footer>
+
+    <!-- Version & Update Modal Dialog -->
+    <div id="modal-overlay" class="modal-backdrop" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button id="modal-close" class="modal-close-btn" type="button" aria-label="Закрыть">&times;</button>
+        <div id="modal-icon" class="modal-icon"></div>
+        <h2 id="modal-title" class="modal-title"></h2>
+        <div id="modal-body" class="modal-body"></div>
+        <div id="modal-actions" class="modal-actions"></div>
+      </div>
+    </div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
