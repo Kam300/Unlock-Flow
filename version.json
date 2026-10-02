@@ -1,9 +1,9 @@
 {
-  "version": "1.0.4",
-  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.0.4.zip",
-  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.0.4.crx",
-  "crxVersion": "1.0.4",
+  "version": "1.4.1",
+  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.1.zip",
+  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.1.crx",
+  "crxVersion": "1.4.1",
   "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
-  "changelog": "Версия 1.0.4: Прямая загрузка ZIP, инструкция по замене файлов и перезапуск расширения одной кнопкой.",
-  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.0.4.zip"
+  "changelog": "Версия 1.4.1: Исправлен индикатор ON при выключенном переключателе. Статусы вкладок и отложенные ответы теперь учитывают состояние расширения.",
+  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.1.zip"
 }

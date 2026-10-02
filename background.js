@@ -15,26 +15,42 @@ const STATUS_CONFIGS = {
   ERR: { text: 'ERR', color: '#dc2626', title: 'Unlock Flow: Ошибка' }
 };
 
-async function setBadge(statusName, tabId, customTitle) {
-  const config = STATUS_CONFIGS[statusName] || STATUS_CONFIGS.ON;
-  const target = Number.isInteger(tabId) ? { tabId } : {};
-  try {
+let badgeQueue = Promise.resolve();
+
+function setBadge(statusName, tabId, customTitle) {
+  // Serialize writes so a late tab response cannot overwrite a newer OFF.
+  badgeQueue = badgeQueue.then(async () => {
+    let enabled;
+    try {
+      const scripts = await chrome.scripting.getRegisteredContentScripts({ ids: [registration.id] });
+      enabled = scripts.length > 0;
+    } catch {
+      statusName = 'ERR';
+    }
+    // The registered helper is also the popup switch's source of truth.
+    if (enabled === false) statusName = 'OFF';
+    const config = STATUS_CONFIGS[statusName] || STATUS_CONFIGS.ERR;
+    const target = Number.isInteger(tabId) ? { tabId } : {};
     await Promise.all([
       chrome.action.setBadgeText({ ...target, text: config.text }),
       chrome.action.setBadgeBackgroundColor({ ...target, color: config.color }),
-      chrome.action.setTitle({ ...target, title: customTitle || config.title })
+      chrome.action.setTitle({ ...target, title: enabled ? (customTitle || config.title) : config.title })
     ]);
-  } catch {}
+  }).catch(() => {});
+  return badgeQueue;
 }
 
 async function refreshGlobalBadge() {
+  await setBadge('ON');
   try {
-    const scripts = await chrome.scripting.getRegisteredContentScripts({ ids: [registration.id] });
-    await setBadge(scripts.length > 0 ? 'ON' : 'OFF');
-  } catch {
-    await setBadge('ON');
-  }
+    // A per-tab badge overrides the global badge. Reset both on every toggle.
+    const tabs = await chrome.tabs.query({});
+    await Promise.all(tabs.map(tab => setBadge('ON', tab.id)));
+  } catch {}
 }
+
+// Reconcile badges whenever the worker starts, including after a reload.
+void refreshGlobalBadge();
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === 'install') {
@@ -80,11 +96,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [registration.id] });
       if (message.enabled && !existing.length) {
         await chrome.scripting.registerContentScripts([registration]);
-        await setBadge('ON');
       } else if (!message.enabled && existing.length) {
         await chrome.scripting.unregisterContentScripts({ ids: [registration.id] });
-        await setBadge('OFF');
       }
+      await refreshGlobalBadge();
       sendResponse({ ok: true });
     })().catch(err => sendResponse({ ok: false, error: err.message }));
     return true;
