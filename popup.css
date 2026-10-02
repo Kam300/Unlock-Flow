@@ -405,12 +405,12 @@ footer a {
 .modal-card {
   position: relative;
   width: 100%;
-  max-width: 275px;
+  max-width: 255px;
   background: #fff;
-  border-radius: 14px;
-  padding: 22px 18px 18px;
+  border-radius: 12px;
+  padding: 16px 14px 14px;
   text-align: center;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
   border: 1px solid #f1f5f9;
   animation: modalPop .18s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -424,16 +424,16 @@ footer a {
 }
 .modal-close-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
   margin: 0;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
   color: #94a3b8;
   background: transparent;
@@ -447,17 +447,17 @@ footer a {
   color: #334155;
 }
 .modal-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 12px;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 8px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .modal-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 .modal-icon.loading {
   background: #eff6ff;
@@ -483,29 +483,29 @@ footer a {
   color: #ef4444;
 }
 .modal-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 .modal-body {
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 11.5px;
+  line-height: 1.45;
   color: #475569;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
 }
 .modal-body p {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 .modal-body p:last-child {
   margin-bottom: 0;
 }
 .modal-changelog {
-  margin-top: 8px;
-  padding: 8px 10px;
+  margin-top: 6px;
+  padding: 6px 8px;
   background: #f8fafc;
   border-radius: 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   line-height: 1.4;
   color: #334155;
   text-align: left;
@@ -520,9 +520,9 @@ footer a {
 .modal-actions a {
   width: 100%;
   margin: 0;
-  padding: 8px 12px;
-  font: 600 12.5px system-ui, -apple-system, 'Segoe UI', sans-serif;
-  border-radius: 7px;
+  padding: 7px 10px;
+  font: 600 12px system-ui, -apple-system, 'Segoe UI', sans-serif;
+  border-radius: 6px;
   text-align: center;
   box-sizing: border-box;
   text-decoration: none;

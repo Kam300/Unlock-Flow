@@ -352,7 +352,7 @@
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(UPDATE_URL, {
+      const res = await fetch(`${UPDATE_URL}?t=${Date.now()}`, {
         cache: 'no-store',
         signal: controller.signal
       });
