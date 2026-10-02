@@ -404,6 +404,8 @@ footer a {
 }
 .modal-card {
   position: relative;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   width: 100%;
   max-width: 255px;
   background: #fff;

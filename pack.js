@@ -125,6 +125,7 @@ if (fs.existsSync(VERSION_JSON_PATH)) {
   const vJson = JSON.parse(fs.readFileSync(VERSION_JSON_PATH, 'utf8'));
   vJson.version = version;
   vJson.crxUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx';
+  vJson.crxVersion = version;
   vJson.zipUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip';
   vJson.changelog = `Версия ${version}: Очищен архив расширения, обновлен интерфейс и оптимизирован размер`;
   fs.writeFileSync(VERSION_JSON_PATH, JSON.stringify(vJson, null, 2) + '\n', 'utf8');

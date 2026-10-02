@@ -8,6 +8,8 @@
   const DEFAULT_LANG = 'ru';
 
   const UPDATE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/version.json';
+  const ZIP_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip';
+  const PENDING_UPDATE_KEY = 'uf_pending_update';
   const GITHUB_REPO = 'https://github.com/Kam300/Unlock-Flow';
   const GITHUB_RELEASES = 'https://github.com/Kam300/Unlock-Flow/releases';
   const TG_CHANNEL = 'https://t.me/TotalC0de/483';
@@ -44,6 +46,10 @@
       modalUpdateAvailable: 'Доступна версия {version}!',
       modalUpdateDesc: 'Вышло обновление расширения. Рекомендуется установить его для стабильной работы.',
       modalDownloadBtn: 'Скачать обновление',
+      modalUpdateSteps: 'Распакуйте ZIP в прежнюю папку расширения с заменой файлов. Затем нажмите кнопку ниже и обновите вкладку Flow. Удалять расширение не нужно.',
+      modalRestartBtn: 'Файлы заменены — перезапустить',
+      modalInstallTitle: 'Завершить обновление',
+      modalRestartFailed: 'Не удалось перезапустить расширение. Попробуйте ещё раз или нажмите ↻ на его карточке в chrome://extensions.',
       modalCloseBtn: 'Понятно',
       modalChannelBtn: 'Канал в Telegram',
       modalGithubBtn: 'GitHub',
@@ -81,6 +87,10 @@
       modalUpdateAvailable: 'Version {version} available!',
       modalUpdateDesc: 'An update is available. We recommend updating for the best stability.',
       modalDownloadBtn: 'Download Update',
+      modalUpdateSteps: 'Extract the ZIP into the existing extension folder and replace the files. Then click the button below and refresh your Flow tab. You do not need to remove the extension.',
+      modalRestartBtn: 'Files replaced — restart',
+      modalInstallTitle: 'Finish updating',
+      modalRestartFailed: 'Could not restart the extension. Try again or click ↻ on its card in chrome://extensions.',
       modalCloseBtn: 'Close',
       modalChannelBtn: 'Telegram Channel',
       modalGithubBtn: 'GitHub',
@@ -360,7 +370,56 @@
     return 0;
   }
 
+  function restartUpdateAction() {
+    return { label: t('modalRestartBtn'), isPrimary: false, onClick: restartExtension };
+  }
+
+  function showUpdateSteps() {
+    openModal({
+      type: 'new-ver',
+      title: t('modalInstallTitle'),
+      bodyHtml: `<p>${t('modalUpdateSteps')}</p>`,
+      actions: [
+        { ...restartUpdateAction(), isPrimary: true },
+        { label: t('modalDownloadBtn'), isPrimary: false, onClick: downloadUpdate },
+        { label: t('modalCloseBtn'), isPrimary: false, onClick: closeModal }
+      ]
+    });
+  }
+
+  async function downloadUpdate() {
+    try {
+      // The popup closes when a download tab opens. Resume the instructions
+      // on the next popup opening, without requiring another network check.
+      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: true });
+      await chrome.tabs.create({ url: `${ZIP_URL}?t=${Date.now()}` });
+    } catch (e) {
+      errorEl.textContent = e?.message || String(e);
+    }
+  }
+
+  async function restartExtension() {
+    try {
+      await chrome.storage.local.remove(PENDING_UPDATE_KEY);
+      chrome.runtime.reload();
+    } catch {
+      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: true }).catch(() => {});
+      errorEl.textContent = t('modalRestartFailed');
+      closeModal();
+    }
+  }
+
+  function escapeHtml(value) {
+    const el = document.createElement('div');
+    el.textContent = String(value);
+    return el.innerHTML;
+  }
+
   async function handleCheckUpdate() {
+    if ((await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY]) {
+      showUpdateSteps();
+      return;
+    }
     const currentVersion = chrome.runtime.getManifest().version;
     checkUpdateBtn.disabled = true;
     checkUpdateBtn.classList.add('spinning');
@@ -388,14 +447,14 @@
       const remoteVersion = data?.version;
 
       if (remoteVersion && compareVersions(remoteVersion, currentVersion) > 0) {
-        const dlUrl = data.downloadUrl || TG_CHANNEL;
-        const changelogHtml = data.changelog ? `<div class="modal-changelog">${data.changelog}</div>` : '';
+        const changelogHtml = data.changelog ? `<div class="modal-changelog">${escapeHtml(data.changelog)}</div>` : '';
         openModal({
           type: 'new-ver',
           title: t('modalUpdateAvailable', remoteVersion),
-          bodyHtml: `<p>${t('modalUpdateDesc')}</p>${changelogHtml}`,
+          bodyHtml: `<p>${t('modalUpdateSteps')}</p>${changelogHtml}`,
           actions: [
-            { label: t('modalDownloadBtn'), isPrimary: true, href: dlUrl },
+            { label: t('modalDownloadBtn'), isPrimary: true, onClick: downloadUpdate },
+            restartUpdateAction(),
             {
               row: [
                 { label: t('modalGithubBtn'), isPrimary: false, href: GITHUB_RELEASES, icon: 'github' },
@@ -411,6 +470,7 @@
           bodyHtml: `<p>${t('modalUpToDate', currentVersion)}</p>`,
           actions: [
             { label: t('modalCloseBtn'), isPrimary: true, onClick: closeModal },
+            restartUpdateAction(),
             {
               row: [
                 { label: t('modalGithubBtn'), isPrimary: false, href: GITHUB_REPO, icon: 'github' },
@@ -426,7 +486,8 @@
         title: `Unlock Flow v${currentVersion}`,
         bodyHtml: `<p>${t('modalError')}</p>`,
         actions: [
-          { label: t('modalReleasesBtn'), isPrimary: true, href: GITHUB_RELEASES, icon: 'github' },
+          { label: t('modalDownloadBtn'), isPrimary: true, onClick: downloadUpdate },
+          restartUpdateAction(),
           {
             row: [
               { label: t('modalChannelBtn'), isPrimary: false, href: TG_CHANNEL, icon: 'tg' },
@@ -445,6 +506,9 @@
 
   async function init() {
     applyStaticTexts();
+    if ((await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY]) {
+      showUpdateSteps();
+    }
     statusEl.textContent = t('checking');
     setStatusDot('loading');
     await refreshStatus();
