@@ -171,7 +171,10 @@
     helpEl.textContent = t('help');
     checkUpdateBtn.title = t('checkUpdate');
     checkUpdateBtn.setAttribute('aria-label', t('checkUpdate'));
-    if (versionBtn) versionBtn.title = t('checkUpdate');
+    if (versionBtn) {
+      versionBtn.textContent = `v${chrome.runtime.getManifest().version}`;
+      versionBtn.title = t('checkUpdate');
+    }
     paintLangButtons();
   }
 

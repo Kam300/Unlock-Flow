@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Unlock flow",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minimum_chrome_version": "111",
   "description": "Unlock Flow interface for Google Flow.",
   "author": "TotalCodeAdmin (https://t.me/TotalCodeAdmin)",

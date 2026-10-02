@@ -3,11 +3,17 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const PROJECT_DIR = __dirname;
+const DIST_DIR = path.join(PROJECT_DIR, 'dist');
 const MANIFEST_PATH = path.join(PROJECT_DIR, 'manifest.json');
 const UPDATES_XML_PATH = path.join(PROJECT_DIR, 'updates.xml');
 const VERSION_JSON_PATH = path.join(PROJECT_DIR, 'version.json');
 
-// Check key location (prefer parent directory so it's not packed inside the crx)
+// Ensure dist directory exists
+if (!fs.existsSync(DIST_DIR)) {
+  fs.mkdirSync(DIST_DIR, { recursive: true });
+}
+
+// Check key location (prefer parent directory so it's never committed or packed)
 let keyPath = path.resolve(PROJECT_DIR, '..', 'key.pem');
 if (!fs.existsSync(keyPath)) {
   keyPath = path.join(PROJECT_DIR, 'key.pem');
@@ -35,8 +41,46 @@ const appid = 'akgiidpcpkicfkcehmapljelahiohfhd';
 
 console.log(`Packaging Unlock-Flow v${version}...`);
 
+// Clean up old archives from project root if any remain
+['Unlock-Flow.crx', 'Unlock-Flow.zip'].forEach(file => {
+  const rootFile = path.join(PROJECT_DIR, file);
+  if (fs.existsSync(rootFile)) {
+    fs.unlinkSync(rootFile);
+    console.log(`Removed root artifact: ${file}`);
+  }
+});
+
+// Clean distribution files list (ONLY files required to run the extension in Chrome)
+const extensionFiles = [
+  'manifest.json',
+  'background.js',
+  'hook.js',
+  'status.js',
+  'popup.html',
+  'popup.css',
+  'popup.js',
+  'icons',
+  'README.txt'
+];
+
+// 1. Stage clean extension files for CRX packaging
+const stageDir = path.join(PROJECT_DIR, '_crx_stage');
+if (fs.existsSync(stageDir)) {
+  fs.rmSync(stageDir, { recursive: true, force: true });
+}
+fs.mkdirSync(stageDir, { recursive: true });
+
+for (const item of extensionFiles) {
+  const src = path.join(PROJECT_DIR, item);
+  const dest = path.join(stageDir, item);
+  if (fs.existsSync(src)) {
+    fs.cpSync(src, dest, { recursive: true });
+  }
+}
+
+// Pack clean stage with Chrome
 try {
-  execSync(`"${chromeExe}" --pack-extension="${PROJECT_DIR}" --pack-extension-key="${keyPath}" --no-message-box`, {
+  execSync(`"${chromeExe}" --pack-extension="${stageDir}" --pack-extension-key="${keyPath}" --no-message-box`, {
     stdio: 'inherit'
   });
 } catch (e) {
@@ -44,51 +88,53 @@ try {
   process.exit(1);
 }
 
-// Chrome puts the .crx in the parent directory by default
-const parentCrx = path.resolve(PROJECT_DIR, '..', `${path.basename(PROJECT_DIR)}.crx`);
-const targetCrx = path.join(PROJECT_DIR, 'Unlock-Flow.crx');
-
-if (fs.existsSync(parentCrx)) {
-  fs.copyFileSync(parentCrx, targetCrx);
-  console.log(`Created: ${targetCrx}`);
-} else if (fs.existsSync(targetCrx)) {
-  console.log(`Updated: ${targetCrx}`);
+// Move generated CRX to dist/Unlock-Flow.crx
+const stageCrx = path.resolve(stageDir, '..', `${path.basename(stageDir)}.crx`);
+const targetCrx = path.join(DIST_DIR, 'Unlock-Flow.crx');
+if (fs.existsSync(stageCrx)) {
+  fs.copyFileSync(stageCrx, targetCrx);
+  fs.unlinkSync(stageCrx);
 }
+// Clean up stage folder
+fs.rmSync(stageDir, { recursive: true, force: true });
+console.log(`Created clean CRX: dist/Unlock-Flow.crx (${(fs.statSync(targetCrx).size / 1024).toFixed(1)} KB)`);
 
-// Create clean ZIP archive for GitHub Releases
-const targetZip = path.join(PROJECT_DIR, 'Unlock-Flow.zip');
+// 2. Create clean ZIP archive for GitHub Releases in dist/
+const targetZip = path.join(DIST_DIR, 'Unlock-Flow.zip');
 try {
-  const distFiles = ['manifest.json', 'background.js', 'hook.js', 'status.js', 'popup.html', 'popup.css', 'popup.js', 'icons', 'README.txt'];
-  const quotedFiles = distFiles.map(f => `'${path.join(PROJECT_DIR, f)}'`).join(',');
+  const quotedFiles = extensionFiles.map(f => `'${path.join(PROJECT_DIR, f)}'`).join(',');
   execSync(`powershell -NoProfile -Command "Compress-Archive -Path @(${quotedFiles}) -DestinationPath '${targetZip}' -Force"`);
-  console.log(`Created: ${targetZip}`);
+  console.log(`Created clean ZIP: dist/Unlock-Flow.zip (${(fs.statSync(targetZip).size / 1024).toFixed(1)} KB)`);
 } catch (e) {
   console.warn('Warning: Could not create ZIP:', e.message);
 }
 
-// Update updates.xml
+// 3. Update updates.xml
 const xmlContent = `<?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='${appid}'>
-    <updatecheck codebase='https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/Unlock-Flow.crx' version='${version}' />
+    <updatecheck codebase='https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx' version='${version}' />
   </app>
 </gupdate>
 `;
 fs.writeFileSync(UPDATES_XML_PATH, xmlContent, 'utf8');
 console.log(`Updated updates.xml to version ${version}`);
 
-// Update version.json
+// 4. Update version.json
 if (fs.existsSync(VERSION_JSON_PATH)) {
   const vJson = JSON.parse(fs.readFileSync(VERSION_JSON_PATH, 'utf8'));
   vJson.version = version;
+  vJson.crxUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx';
+  vJson.zipUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip';
+  vJson.changelog = `Версия ${version}: Очищен архив расширения, обновлен интерфейс и оптимизирован размер`;
   fs.writeFileSync(VERSION_JSON_PATH, JSON.stringify(vJson, null, 2) + '\n', 'utf8');
   console.log(`Updated version.json to version ${version}`);
 }
 
-console.log('\n--- SUCCESS ---');
+console.log('\n--- BUILD FINISHED ---');
 console.log(`App ID: ${appid}`);
 console.log(`Version: ${version}`);
-console.log(`Packages: Unlock-Flow.crx & Unlock-Flow.zip`);
+console.log(`Dist artifacts in: dist/`);
 console.log('Now you can run:');
 console.log('  git add .');
 console.log(`  git commit -m "Release v${version}"`);

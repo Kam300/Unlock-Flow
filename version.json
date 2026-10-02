@@ -1,7 +1,8 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "downloadUrl": "https://t.me/TotalC0de/483",
-  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/Unlock-Flow.crx",
+  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx",
   "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
-  "changelog": "Исправлена маршрутизация, модальное окно версии и нативное автообновление Chrome"
+  "changelog": "Версия 1.0.3: Очищен архив расширения, обновлен интерфейс и оптимизирован размер",
+  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip"
 }
