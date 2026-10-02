@@ -8,6 +8,8 @@
   const DEFAULT_LANG = 'ru';
 
   const UPDATE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/version.json';
+  const GITHUB_REPO = 'https://github.com/Kam300/Unlock-Flow';
+  const GITHUB_RELEASES = 'https://github.com/Kam300/Unlock-Flow/releases';
   const TG_CHANNEL = 'https://t.me/TotalC0de/483';
 
   const STRINGS = {
@@ -44,7 +46,9 @@
       modalDownloadBtn: 'Скачать обновление',
       modalCloseBtn: 'Понятно',
       modalChannelBtn: 'Канал в Telegram',
-      modalError: 'Не удалось связаться с сервером обновлений. Проверьте канал в Telegram.',
+      modalGithubBtn: 'GitHub',
+      modalReleasesBtn: 'Релизы на GitHub',
+      modalError: 'Не удалось связаться с сервером обновлений. Проверьте канал в Telegram или GitHub.',
     },
     en: {
       intro: 'Bypass regional restrictions.',
@@ -79,7 +83,9 @@
       modalDownloadBtn: 'Download Update',
       modalCloseBtn: 'Close',
       modalChannelBtn: 'Telegram Channel',
-      modalError: 'Could not connect to update server. Check our Telegram channel.',
+      modalGithubBtn: 'GitHub',
+      modalReleasesBtn: 'GitHub Releases',
+      modalError: 'Could not connect to update server. Check our Telegram channel or GitHub.',
     },
   };
 
@@ -200,22 +206,41 @@
     modalBody.innerHTML = bodyHtml;
     modalActions.innerHTML = '';
 
-    actions.forEach(({ label, isPrimary, href, onClick }) => {
+    const GITHUB_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>';
+    const TG_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.138-1.294 3.785-1.518 3.973-1.546z"/></svg>';
+
+    function renderActionButton(item) {
+      const { label, isPrimary, href, onClick, icon } = item;
+      const el = href ? document.createElement('a') : document.createElement('button');
+      el.className = isPrimary ? 'modal-btn-primary' : 'modal-btn-secondary';
       if (href) {
-        const a = document.createElement('a');
-        a.className = isPrimary ? 'modal-btn-primary' : 'modal-btn-secondary';
-        a.href = href;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.textContent = label;
-        modalActions.appendChild(a);
+        el.href = href;
+        el.target = '_blank';
+        el.rel = 'noopener noreferrer';
       } else {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = isPrimary ? 'modal-btn-primary' : 'modal-btn-secondary';
-        btn.textContent = label;
-        btn.onclick = onClick || closeModal;
-        modalActions.appendChild(btn);
+        el.type = 'button';
+        el.onclick = onClick || closeModal;
+      }
+      if (icon === 'github') {
+        el.innerHTML = `${GITHUB_SVG}<span>${label}</span>`;
+      } else if (icon === 'tg') {
+        el.innerHTML = `${TG_SVG}<span>${label}</span>`;
+      } else {
+        el.textContent = label;
+      }
+      return el;
+    }
+
+    actions.forEach((item) => {
+      if (item.row) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'modal-btn-row';
+        item.row.forEach((btnConfig) => {
+          rowDiv.appendChild(renderActionButton(btnConfig));
+        });
+        modalActions.appendChild(rowDiv);
+      } else {
+        modalActions.appendChild(renderActionButton(item));
       }
     });
 
@@ -371,7 +396,12 @@
           bodyHtml: `<p>${t('modalUpdateDesc')}</p>${changelogHtml}`,
           actions: [
             { label: t('modalDownloadBtn'), isPrimary: true, href: dlUrl },
-            { label: t('modalCloseBtn'), isPrimary: false, onClick: closeModal }
+            {
+              row: [
+                { label: t('modalGithubBtn'), isPrimary: false, href: GITHUB_RELEASES, icon: 'github' },
+                { label: t('modalCloseBtn'), isPrimary: false, onClick: closeModal }
+              ]
+            }
           ]
         });
       } else {
@@ -381,7 +411,12 @@
           bodyHtml: `<p>${t('modalUpToDate', currentVersion)}</p>`,
           actions: [
             { label: t('modalCloseBtn'), isPrimary: true, onClick: closeModal },
-            { label: t('modalChannelBtn'), isPrimary: false, href: TG_CHANNEL }
+            {
+              row: [
+                { label: t('modalGithubBtn'), isPrimary: false, href: GITHUB_REPO, icon: 'github' },
+                { label: t('modalChannelBtn'), isPrimary: false, href: TG_CHANNEL, icon: 'tg' }
+              ]
+            }
           ]
         });
       }
@@ -391,8 +426,13 @@
         title: `Unlock Flow v${currentVersion}`,
         bodyHtml: `<p>${t('modalError')}</p>`,
         actions: [
-          { label: t('modalChannelBtn'), isPrimary: true, href: TG_CHANNEL },
-          { label: t('modalCloseBtn'), isPrimary: false, onClick: closeModal }
+          { label: t('modalReleasesBtn'), isPrimary: true, href: GITHUB_RELEASES, icon: 'github' },
+          {
+            row: [
+              { label: t('modalChannelBtn'), isPrimary: false, href: TG_CHANNEL, icon: 'tg' },
+              { label: t('modalCloseBtn'), isPrimary: false, onClick: closeModal }
+            ]
+          }
         ]
       });
     } finally {

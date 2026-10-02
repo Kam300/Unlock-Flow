@@ -516,6 +516,12 @@ footer a {
   flex-direction: column;
   gap: 6px;
 }
+.modal-actions .modal-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+}
 .modal-actions button,
 .modal-actions a {
   width: 100%;
@@ -526,7 +532,10 @@ footer a {
   text-align: center;
   box-sizing: border-box;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   cursor: pointer;
 }
 .modal-btn-primary {
