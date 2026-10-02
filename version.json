@@ -2,7 +2,7 @@
   "version": "1.0.4",
   "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip",
   "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx",
-  "crxVersion": "1.0.3",
+  "crxVersion": "1.0.4",
   "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
   "changelog": "Версия 1.0.4: Прямая загрузка ZIP, инструкция по замене файлов и перезапуск расширения одной кнопкой.",
   "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip"

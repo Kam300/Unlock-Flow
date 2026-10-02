@@ -127,7 +127,7 @@ if (fs.existsSync(VERSION_JSON_PATH)) {
   vJson.crxUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx';
   vJson.crxVersion = version;
   vJson.zipUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip';
-  vJson.changelog = `Версия ${version}: Очищен архив расширения, обновлен интерфейс и оптимизирован размер`;
+  if (!vJson.changelog) vJson.changelog = `Версия ${version}`;
   fs.writeFileSync(VERSION_JSON_PATH, JSON.stringify(vJson, null, 2) + '\n', 'utf8');
   console.log(`Updated version.json to version ${version}`);
 }
