@@ -115,9 +115,6 @@
   // Quick Tools & Pinning
   const pinBtn = document.getElementById('pin-btn');
   const pinText = document.getElementById('pin-text');
-  const pinTip = document.getElementById('pin-tip');
-  const pinTipText = document.getElementById('pin-tip-text');
-  const pinTipClose = document.getElementById('pin-tip-close');
 
   // Modal dialog elements
   const modalOverlay = document.getElementById('modal-overlay');
@@ -199,7 +196,6 @@
     }
     paintLangButtons();
     updatePinButtonText();
-    updatePinTip();
   }
 
   function updatePinButtonText() {
@@ -215,19 +211,6 @@
       pinText.textContent = t('openPinned');
       pinBtn.title = t('openPinned');
     }
-  }
-
-  function updatePinTip() {
-    if (!pinTip || !pinTipText) return;
-    try {
-      const dismissed = localStorage.getItem('uf_pin_tip_dismissed');
-      if (dismissed === '1') {
-        pinTip.hidden = true;
-      } else {
-        pinTip.hidden = false;
-        pinTipText.textContent = t('pinTip');
-      }
-    } catch {}
   }
 
   function setLang(next) {
@@ -443,15 +426,6 @@
       errorEl.textContent = e?.message || String(e);
     }
   };
-
-  if (pinTipClose) {
-    pinTipClose.onclick = () => {
-      try {
-        localStorage.setItem('uf_pin_tip_dismissed', '1');
-      } catch {}
-      if (pinTip) pinTip.hidden = true;
-    };
-  }
 
   checkUpdateBtn.onclick = handleCheckUpdate;
   if (versionBtn) versionBtn.onclick = handleCheckUpdate;
