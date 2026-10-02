@@ -11,7 +11,7 @@
 
   const STRINGS = {
     ru: {
-      intro: 'Легко входите во Flow и обновляйте страницу.',
+      intro: 'Обход региональных ограничений.',
       toggleLabel: 'Unlock Flow',
       checking: 'Проверка…',
       enabledOn: 'Включено. Можно открывать Flow.',
@@ -29,7 +29,6 @@
       pinTab: 'Закрепить вкладку Flow',
       unpinTab: 'Открепить вкладку Flow',
       openPinned: 'Открыть и закрепить Flow',
-      pinTip: 'Закрепите значок в панели Chrome (🧩 ➔ 📌)',
       help: 'ТГК',
       checkUpdate: 'Проверить обновление',
       checkingUpdate: 'Проверка…',
@@ -45,7 +44,7 @@
       modalError: 'Не удалось связаться с сервером обновлений. Проверьте канал в Telegram.',
     },
     en: {
-      intro: 'Easily open Flow and refresh the page.',
+      intro: 'Bypass regional restrictions.',
       toggleLabel: 'Unlock Flow',
       checking: 'Checking…',
       enabledOn: 'Enabled. You can open Flow now.',
@@ -63,7 +62,6 @@
       pinTab: 'Pin Flow Tab',
       unpinTab: 'Unpin Flow Tab',
       openPinned: 'Open & Pin Flow Tab',
-      pinTip: 'Pin extension in toolbar (🧩 ➔ 📌)',
       help: 'TG channel',
       checkUpdate: 'Check for updates',
       checkingUpdate: 'Checking…',
