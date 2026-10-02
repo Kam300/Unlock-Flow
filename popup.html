@@ -34,12 +34,36 @@
         <span id="toggle-label">Unlock Flow</span>
         <input id="enabled" type="checkbox" role="switch" disabled>
       </label>
-      <p id="status" role="status"></p>
+      <div class="status-row">
+        <span id="status-dot" class="status-dot"></span>
+        <p id="status" role="status"></p>
+      </div>
     </section>
 
     <div class="tabs">
       <button id="open" type="button"></button>
       <button id="reload" class="secondary" type="button"></button>
+    </div>
+
+    <button id="pin-btn" class="tool-btn" type="button">
+      <svg class="pin-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="17" x2="12" y2="22"></line>
+        <path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z"></path>
+        <line x1="9" y1="4" x2="15" y2="4"></line>
+      </svg>
+      <span id="pin-text">Закрепить вкладку Flow</span>
+    </button>
+
+    <div id="pin-tip" class="pin-tip" hidden>
+      <div class="pin-tip-content">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="17" x2="12" y2="22"></line>
+          <path d="M5 17h14v-2l-2-2V5a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v8l-2 2v2z"></path>
+          <line x1="9" y1="4" x2="15" y2="4"></line>
+        </svg>
+        <span id="pin-tip-text"></span>
+      </div>
+      <button id="pin-tip-close" class="tip-close" type="button" title="Скрыть">&times;</button>
     </div>
 
     <p id="error" role="alert"></p>

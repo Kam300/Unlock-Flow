@@ -8,7 +8,9 @@
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvuTo+xoFdc45KeqQdO8TW4eJ8fAiM3uJb/3Wo93uaijKL+thf7cbBtBfNunOpsO/ubp0IVMymFcVk6MTBG25P0icrK3V9mtHDEI9hjbgexB0sjX40HOdRslsjxeMzG0hLERs23OhU1OBqzUqmccXG61iVqlKC8ftaoF2/FGsAD+POxklki/ks23nQeEiIsWMX66BpolYeUvjFu5+7Bap689TLJcZ6ptqMcoVn4bQEKIxmsRODGdTd/aYQk9O9xI522ROZx0XApiZd2iGSnnkMJ0j//bsIQBYahqnpkwUzGHHmXGuFN5MIMtpny2E+fc68VA3fhxns6Dbr/3lMe+KawIDAQAB",
   "update_url": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
   "permissions": [
-    "scripting"
+    "scripting",
+    "tabs",
+    "storage"
   ],
   "host_permissions": [
     "https://flow.google.com/*",

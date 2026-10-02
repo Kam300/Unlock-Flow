@@ -26,6 +26,10 @@
       selectTab: 'Сначала выберите вкладку Flow.',
       open: 'Открыть Flow',
       reload: 'Обновить (Войти)',
+      pinTab: 'Закрепить вкладку Flow',
+      unpinTab: 'Открепить вкладку Flow',
+      openPinned: 'Открыть и закрепить Flow',
+      pinTip: 'Закрепите значок в панели Chrome (🧩 ➔ 📌)',
       help: 'ТГК',
       checkUpdate: 'Проверить обновление',
       checkingUpdate: 'Проверка…',
@@ -56,6 +60,10 @@
       selectTab: 'Select a Flow tab first.',
       open: 'Enter Flow',
       reload: 'Refresh (Enter)',
+      pinTab: 'Pin Flow Tab',
+      unpinTab: 'Unpin Flow Tab',
+      openPinned: 'Open & Pin Flow Tab',
+      pinTip: 'Pin extension in toolbar (🧩 ➔ 📌)',
       help: 'TG channel',
       checkUpdate: 'Check for updates',
       checkingUpdate: 'Checking…',
@@ -92,6 +100,7 @@
 
   const toggle = document.getElementById('enabled');
   const statusEl = document.getElementById('status');
+  const statusDot = document.getElementById('status-dot');
   const errorEl = document.getElementById('error');
   const reloadBtn = document.getElementById('reload');
   const openBtn = document.getElementById('open');
@@ -102,6 +111,13 @@
   const langEnBtn = document.getElementById('lang-en');
   const checkUpdateBtn = document.getElementById('check-update');
   const versionBtn = document.getElementById('version-btn');
+
+  // Quick Tools & Pinning
+  const pinBtn = document.getElementById('pin-btn');
+  const pinText = document.getElementById('pin-text');
+  const pinTip = document.getElementById('pin-tip');
+  const pinTipText = document.getElementById('pin-tip-text');
+  const pinTipClose = document.getElementById('pin-tip-close');
 
   // Modal dialog elements
   const modalOverlay = document.getElementById('modal-overlay');
@@ -157,6 +173,12 @@
     modalOverlay.hidden = false;
   }
 
+  function setStatusDot(type) {
+    if (!statusDot) return;
+    statusDot.className = 'status-dot';
+    if (type) statusDot.classList.add(type);
+  }
+
   function paintLangButtons() {
     langRuBtn.classList.toggle('active', lang === 'ru');
     langEnBtn.classList.toggle('active', lang === 'en');
@@ -176,6 +198,36 @@
       versionBtn.title = t('checkUpdate');
     }
     paintLangButtons();
+    updatePinButtonText();
+    updatePinTip();
+  }
+
+  function updatePinButtonText() {
+    if (!pinBtn || !pinText) return;
+    const isFlowTab = Boolean(tab?.url?.startsWith(FLOW_URL));
+    if (isFlowTab) {
+      const isPinned = Boolean(tab?.pinned);
+      pinBtn.classList.toggle('pinned', isPinned);
+      pinText.textContent = isPinned ? t('unpinTab') : t('pinTab');
+      pinBtn.title = isPinned ? t('unpinTab') : t('pinTab');
+    } else {
+      pinBtn.classList.remove('pinned');
+      pinText.textContent = t('openPinned');
+      pinBtn.title = t('openPinned');
+    }
+  }
+
+  function updatePinTip() {
+    if (!pinTip || !pinTipText) return;
+    try {
+      const dismissed = localStorage.getItem('uf_pin_tip_dismissed');
+      if (dismissed === '1') {
+        pinTip.hidden = true;
+      } else {
+        pinTip.hidden = false;
+        pinTipText.textContent = t('pinTip');
+      }
+    } catch {}
   }
 
   function setLang(next) {
@@ -197,25 +249,40 @@
     const isFlowTab = Boolean(tab?.url?.startsWith(FLOW_URL));
     reloadBtn.hidden = !isFlowTab;
 
-    statusEl.textContent = toggle.checked ? t('enabledOn') : t('enabledOff');
+    updatePinButtonText();
+
+    if (!toggle.checked) {
+      statusEl.textContent = t('enabledOff');
+      setStatusDot('');
+      return;
+    }
+
+    statusEl.textContent = t('enabledOn');
+    setStatusDot(isFlowTab ? 'loading' : 'active');
 
     if (isFlowTab && toggle.checked) {
       try {
         const res = await chrome.tabs.sendMessage(tab.id, { type: 'status' });
         if (res?.applied) {
           statusEl.textContent = t('applied');
+          setStatusDot('active');
         } else if (res?.isBlockedPage) {
           statusEl.textContent = t('blockedPage');
+          setStatusDot('error');
           reloadBtn.classList.remove('secondary');
         } else if (res?.state === 'armed') {
           statusEl.textContent = t('armed');
+          setStatusDot('loading');
         } else if (typeof res?.state === 'string' && res.state.startsWith('schema mismatch')) {
           statusEl.textContent = t('mismatch');
+          setStatusDot('error');
         } else {
           statusEl.textContent = t('reopen');
+          setStatusDot('loading');
         }
       } catch {
         statusEl.textContent = t('reopen');
+        setStatusDot('loading');
       }
     }
   }
@@ -303,6 +370,7 @@
   async function init() {
     applyStaticTexts();
     statusEl.textContent = t('checking');
+    setStatusDot('loading');
     await refreshStatus();
     toggle.disabled = false;
   }
@@ -316,6 +384,7 @@
 
       if (toggle.checked && tab?.url?.startsWith(FLOW_URL)) {
         statusEl.textContent = t('saved');
+        setStatusDot('active');
         const url = new URL(tab.url);
         if (url.pathname.includes('/unsupported-country') || url.pathname === '/404') {
           await chrome.tabs.update(tab.id, { url: FLOW_URL });
@@ -327,9 +396,11 @@
       }
 
       statusEl.textContent = toggle.checked ? t('enabledOn') : t('enabledOff');
+      setStatusDot(toggle.checked ? 'active' : '');
     } catch (e) {
       toggle.checked = !toggle.checked;
       errorEl.textContent = e?.message || t('saveFailed');
+      setStatusDot('error');
     } finally {
       toggle.disabled = false;
     }
@@ -352,8 +423,35 @@
       window.close();
     } catch (e) {
       errorEl.textContent = e?.message || String(e);
+      setStatusDot('error');
     }
   };
+
+  pinBtn.onclick = async () => {
+    try {
+      const isFlowTab = Boolean(tab?.url?.startsWith(FLOW_URL));
+      if (isFlowTab) {
+        const nextPinned = !tab.pinned;
+        const updated = await chrome.tabs.update(tab.id, { pinned: nextPinned });
+        tab = updated;
+        updatePinButtonText();
+      } else {
+        await chrome.tabs.create({ url: FLOW_URL, pinned: true });
+        window.close();
+      }
+    } catch (e) {
+      errorEl.textContent = e?.message || String(e);
+    }
+  };
+
+  if (pinTipClose) {
+    pinTipClose.onclick = () => {
+      try {
+        localStorage.setItem('uf_pin_tip_dismissed', '1');
+      } catch {}
+      if (pinTip) pinTip.hidden = true;
+    };
+  }
 
   checkUpdateBtn.onclick = handleCheckUpdate;
   if (versionBtn) versionBtn.onclick = handleCheckUpdate;
@@ -371,5 +469,6 @@
 
   init().catch((e) => {
     errorEl.textContent = e?.message || String(e);
+    setStatusDot('error');
   });
 })();
