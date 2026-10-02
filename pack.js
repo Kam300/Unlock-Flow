@@ -37,6 +37,8 @@ if (!chromeExe) {
 
 const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 const version = manifest.version;
+const crxName = `Unlock-Flow-v${version}.crx`;
+const zipName = `Unlock-Flow-v${version}.zip`;
 const appid = 'akgiidpcpkicfkcehmapljelahiohfhd';
 
 console.log(`Packaging Unlock-Flow v${version}...`);
@@ -90,30 +92,34 @@ try {
 
 // Move generated CRX to dist/Unlock-Flow.crx
 const stageCrx = path.resolve(stageDir, '..', `${path.basename(stageDir)}.crx`);
-const targetCrx = path.join(DIST_DIR, 'Unlock-Flow.crx');
+const targetCrx = path.join(DIST_DIR, crxName);
 if (fs.existsSync(stageCrx)) {
   fs.copyFileSync(stageCrx, targetCrx);
+  // Keep stable URLs working for users on older versions.
+  fs.copyFileSync(stageCrx, path.join(DIST_DIR, 'Unlock-Flow.crx'));
   fs.unlinkSync(stageCrx);
 }
 // Clean up stage folder
 fs.rmSync(stageDir, { recursive: true, force: true });
-console.log(`Created clean CRX: dist/Unlock-Flow.crx (${(fs.statSync(targetCrx).size / 1024).toFixed(1)} KB)`);
+console.log(`Created clean CRX: dist/${crxName} (${(fs.statSync(targetCrx).size / 1024).toFixed(1)} KB)`);
 
 // 2. Create clean ZIP archive for GitHub Releases in dist/
-const targetZip = path.join(DIST_DIR, 'Unlock-Flow.zip');
+const targetZip = path.join(DIST_DIR, zipName);
 try {
   const quotedFiles = extensionFiles.map(f => `'${path.join(PROJECT_DIR, f)}'`).join(',');
   execSync(`powershell -NoProfile -Command "Compress-Archive -Path @(${quotedFiles}) -DestinationPath '${targetZip}' -Force"`);
-  console.log(`Created clean ZIP: dist/Unlock-Flow.zip (${(fs.statSync(targetZip).size / 1024).toFixed(1)} KB)`);
+  fs.copyFileSync(targetZip, path.join(DIST_DIR, 'Unlock-Flow.zip'));
+  console.log(`Created clean ZIP: dist/${zipName} (${(fs.statSync(targetZip).size / 1024).toFixed(1)} KB)`);
 } catch (e) {
-  console.warn('Warning: Could not create ZIP:', e.message);
+  console.error('Could not create ZIP:', e.message);
+  process.exit(1);
 }
 
 // 3. Update updates.xml
 const xmlContent = `<?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='${appid}'>
-    <updatecheck codebase='https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx' version='${version}' />
+    <updatecheck codebase='https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/${crxName}' version='${version}' />
   </app>
 </gupdate>
 `;
@@ -124,9 +130,10 @@ console.log(`Updated updates.xml to version ${version}`);
 if (fs.existsSync(VERSION_JSON_PATH)) {
   const vJson = JSON.parse(fs.readFileSync(VERSION_JSON_PATH, 'utf8'));
   vJson.version = version;
-  vJson.crxUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.crx';
+  vJson.crxUrl = `https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/${crxName}`;
   vJson.crxVersion = version;
-  vJson.zipUrl = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip';
+  vJson.zipUrl = `https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/${zipName}`;
+  vJson.downloadUrl = vJson.zipUrl;
   if (!vJson.changelog) vJson.changelog = `Версия ${version}`;
   fs.writeFileSync(VERSION_JSON_PATH, JSON.stringify(vJson, null, 2) + '\n', 'utf8');
   console.log(`Updated version.json to version ${version}`);

@@ -8,7 +8,8 @@
   const DEFAULT_LANG = 'ru';
 
   const UPDATE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/version.json';
-  const ZIP_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow.zip';
+  const ZIP_BASE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/';
+  let updateZipUrl = `${ZIP_BASE_URL}Unlock-Flow-v${chrome.runtime.getManifest().version}.zip`;
   const PENDING_UPDATE_KEY = 'uf_pending_update';
   const GITHUB_REPO = 'https://github.com/Kam300/Unlock-Flow';
   const GITHUB_RELEASES = 'https://github.com/Kam300/Unlock-Flow/releases';
@@ -391,8 +392,8 @@
     try {
       // The popup closes when a download tab opens. Resume the instructions
       // on the next popup opening, without requiring another network check.
-      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: true });
-      await chrome.tabs.create({ url: `${ZIP_URL}?t=${Date.now()}` });
+      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: updateZipUrl });
+      await chrome.tabs.create({ url: `${updateZipUrl}?t=${Date.now()}` });
     } catch (e) {
       errorEl.textContent = e?.message || String(e);
     }
@@ -403,7 +404,7 @@
       await chrome.storage.local.remove(PENDING_UPDATE_KEY);
       chrome.runtime.reload();
     } catch {
-      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: true }).catch(() => {});
+      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: updateZipUrl }).catch(() => {});
       errorEl.textContent = t('modalRestartFailed');
       closeModal();
     }
@@ -415,8 +416,16 @@
     return el.innerHTML;
   }
 
+  async function hasPendingUpdate() {
+    const pending = (await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY];
+    if (typeof pending === 'string' && /^https:\/\/raw\.githubusercontent\.com\/Kam300\/Unlock-Flow\/main\/dist\/Unlock-Flow-v\d+\.\d+\.\d+(?:\.\d+)?\.zip$/.test(pending)) {
+      updateZipUrl = pending;
+    }
+    return Boolean(pending);
+  }
+
   async function handleCheckUpdate() {
-    if ((await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY]) {
+    if (await hasPendingUpdate()) {
       showUpdateSteps();
       return;
     }
@@ -445,6 +454,10 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const remoteVersion = data?.version;
+      if (typeof remoteVersion !== 'string' || !/^\d+\.\d+\.\d+(?:\.\d+)?$/.test(remoteVersion)) {
+        throw new Error('Invalid update version');
+      }
+      updateZipUrl = `${ZIP_BASE_URL}Unlock-Flow-v${remoteVersion}.zip`;
 
       if (remoteVersion && compareVersions(remoteVersion, currentVersion) > 0) {
         const changelogHtml = data.changelog ? `<div class="modal-changelog">${escapeHtml(data.changelog)}</div>` : '';
@@ -506,7 +519,7 @@
 
   async function init() {
     applyStaticTexts();
-    if ((await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY]) {
+    if (await hasPendingUpdate()) {
       showUpdateSteps();
     }
     statusEl.textContent = t('checking');

@@ -3,6 +3,7 @@ Extract ZIP. In chrome://extensions enable Developer mode, select Load unpacked,
 Keep this folder in place. Use the extension popup controls as needed.
 
 Updating / Обновление:
+Archives include the version in their name, for example Unlock-Flow-v1.0.4.zip.
 1. In the extension popup, check for updates and click Download Update.
 2. Extract the ZIP into this SAME folder, replacing existing files.
 3. Open the popup again and click Files replaced — restart. Refresh your Flow tab.
