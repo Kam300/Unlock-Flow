@@ -118,6 +118,14 @@ try {
   process.exit(1);
 }
 
+// 2b. Firefox build (same sources, manifest.firefox.json)
+try {
+  execSync(`"${process.execPath}" "${path.join(PROJECT_DIR, 'pack-firefox.js')}"`, { stdio: 'inherit' });
+} catch (e) {
+  console.error('Could not create Firefox ZIP:', e.message);
+  process.exit(1);
+}
+
 // 3. Update updates.xml
 const xmlContent = `<?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>

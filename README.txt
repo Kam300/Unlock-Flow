@@ -17,3 +17,17 @@ If your old version has no restart button, reload its card in chrome://extension
 Не удаляйте расширение и не загружайте вторую копию.
 Если в старой версии нет кнопки перезапуска, один раз нажмите ↻
 на карточке расширения в chrome://extensions.
+
+Firefox (128+):
+Use Unlock-Flow-Firefox-v<version>.zip.
+Temporary: about:debugging#/runtime/this-firefox -> Load Temporary Add-on -> select the ZIP.
+Permanent (Developer Edition / Nightly / ESR): about:config -> xpinstall.signatures.required = false,
+then about:addons -> gear -> Install Add-on From File -> select the ZIP.
+The in-popup updater is hidden in Firefox: download new versions from GitHub manually.
+
+Firefox (128+):
+Используйте Unlock-Flow-Firefox-v<версия>.zip.
+Временно: about:debugging#/runtime/this-firefox -> «Загрузить временное дополнение…» -> выбрать ZIP.
+Постоянно (Developer Edition / Nightly / ESR): about:config -> xpinstall.signatures.required = false,
+затем about:addons -> шестерёнка -> «Установить дополнение из файла…» -> выбрать ZIP.
+Проверка обновлений в Firefox скрыта: новые версии скачивайте с GitHub вручную.

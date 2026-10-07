@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "Unlock flow",
+  "version": "1.4.1",
+  "description": "Unlock Flow interface for Google Flow.",
+  "author": "TotalCodeAdmin (https://t.me/TotalCodeAdmin)",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "unlock-flow@totalcode",
+      "strict_min_version": "128.0"
+    }
+  },
+  "permissions": [
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://flow.google.com/*",
+    "https://raw.githubusercontent.com/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "Unlock flow",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://flow.google.com/*"
+      ],
+      "js": [
+        "status.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

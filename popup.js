@@ -666,8 +666,15 @@
   };
 
   if (themeToggle) themeToggle.onclick = toggleTheme;
-  checkUpdateBtn.onclick = handleCheckUpdate;
-  if (versionBtn) versionBtn.onclick = handleCheckUpdate;
+  // The updater downloads Chrome builds, so it is hidden in the Firefox build.
+  const isFirefox = chrome.runtime.getURL('').startsWith('moz-extension:');
+  if (isFirefox) {
+    checkUpdateBtn.style.display = 'none';
+    if (versionBtn) versionBtn.disabled = true;
+  } else {
+    checkUpdateBtn.onclick = handleCheckUpdate;
+    if (versionBtn) versionBtn.onclick = handleCheckUpdate;
+  }
 
   modalCloseBtn.onclick = closeModal;
   modalOverlay.onclick = (e) => {
