@@ -7,12 +7,13 @@ const registration = {
   persistAcrossSessions: true
 };
 
+// Compact iOS-style badges: empty when off, a dot/glyph otherwise.
 const STATUS_CONFIGS = {
-  OFF: { text: 'OFF', color: '#64748b', title: 'Unlock Flow: Выключено' },
-  ON:  { text: 'ON',  color: '#2563eb', title: 'Unlock Flow: Включено' },
-  RUN: { text: 'RUN', color: '#f59e0b', title: 'Unlock Flow: Вход во Flow…' },
-  OK:  { text: 'OK',  color: '#16a34a', title: 'Unlock Flow: Разблокировано!' },
-  ERR: { text: 'ERR', color: '#dc2626', title: 'Unlock Flow: Ошибка' }
+  OFF: { text: '',  color: '#8e8e93', title: 'Unlock Flow: Выключено' },
+  ON:  { text: '●', color: '#007aff', title: 'Unlock Flow: Включено' },
+  RUN: { text: '…', color: '#ff9500', title: 'Unlock Flow: Вход во Flow…' },
+  OK:  { text: '✓', color: '#007aff', title: 'Unlock Flow: Разблокировано!' },
+  ERR: { text: '!', color: '#ff3b30', title: 'Unlock Flow: Ошибка' }
 };
 
 let badgeQueue = Promise.resolve();
@@ -34,6 +35,7 @@ function setBadge(statusName, tabId, customTitle) {
     await Promise.all([
       chrome.action.setBadgeText({ ...target, text: config.text }),
       chrome.action.setBadgeBackgroundColor({ ...target, color: config.color }),
+      chrome.action.setBadgeTextColor?.({ ...target, color: '#ffffff' }),
       chrome.action.setTitle({ ...target, title: enabled ? (customTitle || config.title) : config.title })
     ]);
   }).catch(() => {});

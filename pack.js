@@ -61,6 +61,9 @@ const extensionFiles = [
   'popup.html',
   'popup.css',
   'popup.js',
+  'fx.css',
+  'fx.js',
+  'fonts',
   'icons',
   'README.txt'
 ];
