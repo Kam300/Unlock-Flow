@@ -57,6 +57,7 @@ const extensionFiles = [
   'manifest.json',
   'background.js',
   'hook.js',
+  'playground.js',
   'status.js',
   'popup.html',
   'popup.css',
