@@ -20,6 +20,7 @@ function createWorker(enabled = false) {
         return enabled ? [{ id: 'flow-helper' }] : [];
       },
       async registerContentScripts() { enabled = true; },
+      async updateContentScripts() {},
       async unregisterContentScripts() { enabled = false; }
     },
     action: {

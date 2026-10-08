@@ -2,6 +2,23 @@
   'use strict';
 
   const FLOW_URL = 'https://flow.google.com/';
+  let tab;
+  const SERVICE_KEY = 'uf_service';
+  let selectedService = 'flow';
+  try { if (localStorage.getItem(SERVICE_KEY) === 'playground') selectedService = 'playground'; } catch {}
+  let selectionInitialized = false;
+  let statusRequest = 0;
+  const PLAYGROUND_URL = 'https://playground.google/404?login_success=1&pli=1';
+  function isSupportedTab(candidate) {
+    return Boolean(candidate?.url?.startsWith(FLOW_URL) || isPlaygroundTab(candidate));
+  }
+  function isPlaygroundTab(candidate) {
+    return Boolean(candidate?.url?.startsWith('https://playground.google/'));
+  }
+  function isSelectedTab(candidate) {
+    return selectedService === 'playground' ? isPlaygroundTab(candidate) : Boolean(candidate?.url?.startsWith(FLOW_URL));
+  }
+  function selectedUrl() { return selectedService === 'playground' ? PLAYGROUND_URL : FLOW_URL; }
   const HELPER_ID = 'flow-helper';
   const LANG_KEY = 'uf_lang';
   const THEME_KEY = 'uf_theme';
@@ -17,25 +34,36 @@
 
   const STRINGS = {
     ru: {
-      intro: 'Обход региональных ограничений.',
-      toggleLabel: 'Unlock Flow',
+      intro: 'Выберите сервис — мы поможем его открыть.',
+      toggleLabel: 'Помощь со входом',
+      toggleHint: 'Один переключатель для обоих сервисов',
+      serviceLabel: 'Выбор сервиса',
+      flowCaption: 'Создание видео',
+      playgroundCaption: 'Создание игр',
+      flowHint: 'Откройте Flow и войдите в аккаунт Google.',
+      playgroundHint: 'Откроем каталог игр. Доступ к созданию игр зависит от Google.',
+      openDisabled: 'Включить и открыть Flow',
       checking: 'Проверка…',
-      enabledOn: 'Включено. Можно открывать Flow.',
-      enabledOff: 'Выключено.',
+      enabledOn: 'Включено. Откройте Flow, чтобы начать.',
+      enabledOff: 'Выключено. Кнопка ниже включит помощь и откроет сервис.',
       applied: 'Разблокировано! Flow работает.',
-      armed: 'Готово. Ожидание ответа Flow.',
-      blockedPage: 'Вы на странице блокировки. Нажмите кнопку «Обновить».',
-      mismatch: 'Flow изменился. Требуется обновление helper.',
-      reopen: 'Перезагрузите эту вкладку Flow, чтобы войти.',
+      armed: 'Готовимся к входу. Дождитесь загрузки страницы.',
+      blockedPage: 'Вход ограничен. Нажмите «Повторить вход».',
+      mismatch: 'Сервис изменился. Проверьте обновления расширения.',
+      reopen: 'Нажмите «Повторить вход», чтобы применить помощь.',
       saved: 'Сохранено. Вкладка обновляется…',
       saveFailed: 'Не удалось сохранить настройку',
       selectTab: 'Сначала выберите вкладку Flow.',
       open: 'Открыть Flow',
-      reload: 'Обновить (Войти)',
-      pinTab: 'Закрепить вкладку Flow',
-      unpinTab: 'Открепить вкладку Flow',
-      openPinned: 'Открыть и закрепить Flow',
-      help: 'ТГК',
+      playgroundReady: 'Каталог Playground открыт.',
+      playgroundSetup: 'Завершите настройку профиля или вход в окне Google. Затем продолжим автоматически.',
+      playgroundEntering: 'Открываем каталог Playground…',
+      playgroundEntryFailed: 'Каталог не открылся. Нажмите «Повторить вход».',
+      reload: 'Повторить вход',
+      pinTab: 'Закрепить вкладку',
+      unpinTab: 'Открепить вкладку',
+      openPinned: 'Открыть в закреплённой вкладке',
+      help: 'Помощь и новости',
       checkUpdate: 'Проверить обновление',
       checkingUpdate: 'Проверка…',
       themeDark: 'Тёмная тема',
@@ -43,11 +71,11 @@
       modalCheckingTitle: 'Unlock Flow',
       modalChecking: 'Проверка наличия обновлений…',
       modalUpToDateTitle: 'У вас последняя версия',
-      modalUpToDate: 'Версия {version} актуальна. Все функции работают в штатном режиме.',
+      modalUpToDate: 'Установлена актуальная версия {version}.',
       modalUpdateAvailable: 'Доступна версия {version}!',
       modalUpdateDesc: 'Вышло обновление расширения. Рекомендуется установить его для стабильной работы.',
       modalDownloadBtn: 'Скачать обновление',
-      modalUpdateSteps: 'Распакуйте ZIP в прежнюю папку расширения с заменой файлов. Затем нажмите кнопку ниже и обновите вкладку Flow. Удалять расширение не нужно.',
+      modalUpdateSteps: 'Распакуйте ZIP в прежнюю папку расширения с заменой файлов. Затем нажмите кнопку ниже и обновите вкладку сервиса. Удалять расширение не нужно.',
       modalRestartBtn: 'Файлы заменены — перезапустить',
       modalInstallTitle: 'Завершить обновление',
       modalRestartFailed: 'Не удалось перезапустить расширение. Попробуйте ещё раз или нажмите ↻ на его карточке в chrome://extensions.',
@@ -58,25 +86,36 @@
       modalError: 'Не удалось связаться с сервером обновлений. Проверьте канал в Telegram или GitHub.',
     },
     en: {
-      intro: 'Bypass regional restrictions.',
-      toggleLabel: 'Unlock Flow',
+      intro: 'Choose a service — we’ll help you get started.',
+      toggleLabel: 'Help with access',
+      toggleHint: 'One switch for both services',
+      serviceLabel: 'Choose a service',
+      flowCaption: 'Create videos',
+      playgroundCaption: 'Create games',
+      flowHint: 'Open Flow and sign in to your Google account.',
+      playgroundHint: 'We’ll open the game catalog. Google determines access to game creation.',
+      openDisabled: 'Enable and open Flow',
       checking: 'Checking…',
-      enabledOn: 'Enabled. You can open Flow now.',
-      enabledOff: 'Disabled.',
+      enabledOn: 'Enabled. Open Flow to get started.',
+      enabledOff: 'Off. The button below will enable help and open the service.',
       applied: 'Unlocked! Flow is working.',
-      armed: 'Ready. Waiting for Flow response.',
-      blockedPage: 'You are on the blocked page. Click "Refresh".',
-      mismatch: 'Flow may have changed. A helper update is required.',
-      reopen: 'Reload this Flow tab to enter.',
+      armed: 'Getting ready. Wait for the page to load.',
+      blockedPage: 'Access is restricted. Click “Retry access”.',
+      mismatch: 'The service has changed. Check for extension updates.',
+      reopen: 'Click “Retry access” to apply access help.',
       saved: 'Saved. Reloading tab…',
       saveFailed: 'Setting could not be saved',
       selectTab: 'Select a Flow tab first.',
       open: 'Enter Flow',
-      reload: 'Refresh (Enter)',
-      pinTab: 'Pin Flow Tab',
-      unpinTab: 'Unpin Flow Tab',
-      openPinned: 'Open & Pin Flow Tab',
-      help: 'TG channel',
+      playgroundReady: 'Playground catalog opened.',
+      playgroundSetup: 'Complete your profile setup or sign-in in the Google window. We’ll then continue automatically.',
+      playgroundEntering: 'Opening the Playground catalog…',
+      playgroundEntryFailed: 'The catalog did not open. Click “Retry access”.',
+      reload: 'Retry access',
+      pinTab: 'Pin tab',
+      unpinTab: 'Unpin tab',
+      openPinned: 'Open in a pinned tab',
+      help: 'Help & news',
       checkUpdate: 'Check for updates',
       checkingUpdate: 'Checking…',
       themeDark: 'Dark theme',
@@ -84,11 +123,11 @@
       modalCheckingTitle: 'Unlock Flow',
       modalChecking: 'Checking for updates…',
       modalUpToDateTitle: 'You are up to date',
-      modalUpToDate: 'Version {version} is up to date. All features are working normally.',
+      modalUpToDate: 'You have the latest version, {version}.',
       modalUpdateAvailable: 'Version {version} available!',
       modalUpdateDesc: 'An update is available. We recommend updating for the best stability.',
       modalDownloadBtn: 'Download Update',
-      modalUpdateSteps: 'Extract the ZIP into the existing extension folder and replace the files. Then click the button below and refresh your Flow tab. You do not need to remove the extension.',
+      modalUpdateSteps: 'Extract the ZIP into the existing extension folder and replace the files. Then click the button below and refresh the service tab. You do not need to remove the extension.',
       modalRestartBtn: 'Files replaced — restart',
       modalInstallTitle: 'Finish updating',
       modalRestartFailed: 'Could not restart the extension. Try again or click ↻ on its card in chrome://extensions.',
@@ -115,6 +154,7 @@
     if (param !== undefined) {
       str = str.replace('{version}', param);
     }
+    if (selectedService === 'playground' && ['enabledOn', 'applied', 'armed', 'mismatch', 'reopen', 'selectTab', 'open', 'openDisabled', 'pinTab', 'unpinTab', 'openPinned'].includes(key)) str = str.replace(/Flow/g, 'Playground');
     return str;
   }
 
@@ -124,6 +164,8 @@
   const errorEl = document.getElementById('error');
   const reloadBtn = document.getElementById('reload');
   const openBtn = document.getElementById('open');
+  const flowChoice = document.getElementById('service-flow');
+  const playgroundChoice = document.getElementById('service-playground');
   const introEl = document.getElementById('intro');
   const toggleLabel = document.getElementById('toggle-label');
   const helpEl = document.getElementById('help-text');
@@ -192,8 +234,6 @@
   const modalTitle = document.getElementById('modal-title');
   const modalBody = document.getElementById('modal-body');
   const modalActions = document.getElementById('modal-actions');
-
-  let tab;
 
   function closeModal() {
     modalOverlay.hidden = true;
@@ -271,9 +311,17 @@
   }
 
   function applyStaticTexts() {
+    document.getElementById('title').textContent = lang === 'ru' ? 'Flow и Playground' : 'Flow & Playground';
     introEl.textContent = t('intro');
     toggleLabel.textContent = t('toggleLabel');
-    openBtn.textContent = t('open');
+    openBtn.textContent = t(toggle.checked ? 'open' : 'openDisabled');
+    document.getElementById('toggle-hint').textContent = t('toggleHint');
+    document.getElementById('service-hint').textContent = t(selectedService === 'playground' ? 'playgroundHint' : 'flowHint');
+    document.getElementById('flow-caption').textContent = t('flowCaption');
+    document.getElementById('playground-caption').textContent = t('playgroundCaption');
+    document.getElementById('service-picker').setAttribute('aria-label', t('serviceLabel'));
+    flowChoice.setAttribute('aria-pressed', String(selectedService === 'flow'));
+    playgroundChoice.setAttribute('aria-pressed', String(selectedService === 'playground'));
     reloadBtn.textContent = t('reload');
     helpEl.textContent = t('help');
     checkUpdateBtn.title = t('checkUpdate');
@@ -289,7 +337,7 @@
 
   function updatePinButtonText() {
     if (!pinBtn || !pinText) return;
-    const isFlowTab = Boolean(tab?.url?.startsWith(FLOW_URL));
+    const isFlowTab = isSelectedTab(tab);
     if (isFlowTab) {
       const isPinned = Boolean(tab?.pinned);
       pinBtn.classList.toggle('pinned', isPinned);
@@ -314,12 +362,25 @@
   }
 
   async function refreshStatus() {
+    const request = ++statusRequest;
     const scripts = await chrome.scripting.getRegisteredContentScripts({ ids: [HELPER_ID] });
+    if (request !== statusRequest) return;
     toggle.checked = scripts.length > 0;
 
-    [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const isFlowTab = Boolean(tab?.url?.startsWith(FLOW_URL));
-    reloadBtn.hidden = !isFlowTab;
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (request !== statusRequest) return;
+    if (!selectionInitialized) {
+      if (isSupportedTab(activeTab)) selectedService = isPlaygroundTab(activeTab) ? 'playground' : 'flow';
+      selectionInitialized = true;
+    }
+    const candidates = isSelectedTab(activeTab) ? [activeTab] : await chrome.tabs.query({ currentWindow: true });
+    if (request !== statusRequest) return;
+    tab = candidates.find(isSelectedTab);
+    applyStaticTexts();
+    const isFlowTab = isSelectedTab(tab);
+    reloadBtn.hidden = !isFlowTab || !toggle.checked;
+    reloadBtn.disabled = !toggle.checked;
+    reloadBtn.classList.add('secondary');
 
     updatePinButtonText();
 
@@ -335,13 +396,27 @@
     if (isFlowTab && toggle.checked) {
       try {
         const res = await chrome.tabs.sendMessage(tab.id, { type: 'status' });
-        if (res?.applied) {
+        if (request !== statusRequest) return;
+        if (res?.state === 'playground-ready') {
+          statusEl.textContent = t('playgroundReady');
+          setStatusDot('active');
+        } else if (res?.state === 'playground-setup') {
+          statusEl.textContent = t('playgroundSetup');
+          setStatusDot('loading');
+          reloadBtn.hidden = true;
+        } else if (res?.state === 'playground-entry') {
+          statusEl.textContent = t('playgroundEntering');
+          setStatusDot('loading');
+          reloadBtn.hidden = true;
+        } else if (res?.state === 'playground-entry-failed') {
+          statusEl.textContent = t('playgroundEntryFailed');
+          setStatusDot('error');
+        } else if (res?.applied) {
           statusEl.textContent = t('applied');
           setStatusDot('active');
         } else if (res?.isBlockedPage) {
           statusEl.textContent = t('blockedPage');
           setStatusDot('error');
-          reloadBtn.classList.remove('secondary');
         } else if (res?.state === 'armed') {
           statusEl.textContent = t('armed');
           setStatusDot('loading');
@@ -353,6 +428,7 @@
           setStatusDot('loading');
         }
       } catch {
+        if (request !== statusRequest) return;
         statusEl.textContent = t('reopen');
         setStatusDot('loading');
       }
@@ -526,6 +602,7 @@
     setStatusDot('loading');
     await refreshStatus();
     toggle.disabled = false;
+    openBtn.disabled = false;
   }
 
   toggle.addEventListener('change', async () => {
@@ -535,12 +612,12 @@
       const res = await chrome.runtime.sendMessage({ type: 'setEnabled', enabled: toggle.checked });
       if (!res?.ok) throw new Error(res?.error || t('saveFailed'));
 
-      if (toggle.checked && tab?.url?.startsWith(FLOW_URL)) {
+      if (toggle.checked && isSupportedTab(tab)) {
         statusEl.textContent = t('saved');
         setStatusDot('active');
         const url = new URL(tab.url);
-        if (url.pathname.includes('/unsupported-country') || url.pathname === '/404') {
-          await chrome.tabs.update(tab.id, { url: FLOW_URL });
+        if (isPlaygroundTab(tab) || url.pathname.includes('/unsupported-country') || url.pathname === '/404') {
+          await chrome.tabs.update(tab.id, { url: isPlaygroundTab(tab) ? PLAYGROUND_URL : FLOW_URL });
         } else {
           await chrome.tabs.reload(tab.id);
         }
@@ -548,10 +625,9 @@
         return;
       }
 
-      statusEl.textContent = toggle.checked ? t('enabledOn') : t('enabledOff');
-      setStatusDot(toggle.checked ? 'active' : '');
+      await refreshStatus();
     } catch (e) {
-      toggle.checked = !toggle.checked;
+      await refreshStatus().catch(() => {});
       errorEl.textContent = e?.message || t('saveFailed');
       setStatusDot('error');
     } finally {
@@ -559,17 +635,56 @@
     }
   });
 
-  openBtn.onclick = () => {
-    chrome.tabs.create({ url: FLOW_URL });
-  };
+  async function openService() {
+    openBtn.disabled = true;
+    flowChoice.disabled = playgroundChoice.disabled = toggle.disabled = true;
+    errorEl.textContent = '';
+    try {
+      const wasDisabled = !toggle.checked;
+      if (wasDisabled) {
+        const res = await chrome.runtime.sendMessage({ type: 'setEnabled', enabled: true });
+        if (!res?.ok) throw new Error(t('saveFailed'));
+        toggle.checked = true;
+      }
+      const candidates = await chrome.tabs.query({ currentWindow: true });
+      const existing = candidates.find(item => item.active && isSelectedTab(item)) || candidates.find(isSelectedTab);
+      if (existing) {
+        const blocked = /\/(unsupported-country|region-unavailable|404)(?:[/?#]|$)/.test(new URL(existing.url).pathname);
+        await chrome.tabs.update(existing.id, { active: true, ...((wasDisabled || blocked) ? { url: selectedUrl() } : {}) });
+      } else {
+        await chrome.tabs.create({ url: selectedUrl() });
+      }
+      window.close();
+    } catch (e) {
+      errorEl.textContent = e?.message || t('saveFailed');
+    } finally {
+      openBtn.disabled = false;
+      flowChoice.disabled = playgroundChoice.disabled = toggle.disabled = false;
+      applyStaticTexts();
+    }
+  }
+  openBtn.onclick = openService;
+  function chooseService(service) {
+    selectedService = service;
+    selectionInitialized = true;
+    tab = undefined;
+    try { localStorage.setItem(SERVICE_KEY, service); } catch {}
+    errorEl.textContent = '';
+    reloadBtn.hidden = true;
+    applyStaticTexts();
+    statusEl.textContent = t('checking');
+    void refreshStatus().catch(e => { errorEl.textContent = e?.message || String(e); });
+  }
+  flowChoice.onclick = () => chooseService('flow');
+  playgroundChoice.onclick = () => chooseService('playground');
 
   reloadBtn.onclick = async () => {
     try {
       const current = await chrome.tabs.get(tab.id);
-      if (!current.url?.startsWith(FLOW_URL)) throw new Error(t('selectTab'));
+      if (!isSelectedTab(current)) throw new Error(t('selectTab'));
       const url = new URL(current.url);
-      if (url.pathname.includes('/unsupported-country') || url.pathname === '/404') {
-        await chrome.tabs.update(tab.id, { url: FLOW_URL });
+      if (isPlaygroundTab(current) || url.pathname.includes('/unsupported-country') || url.pathname === '/404') {
+        await chrome.tabs.update(current.id, { url: isPlaygroundTab(current) ? PLAYGROUND_URL : FLOW_URL });
       } else {
         await chrome.tabs.reload(tab.id);
       }
@@ -582,14 +697,14 @@
 
   pinBtn.onclick = async () => {
     try {
-      const isFlowTab = Boolean(tab?.url?.startsWith(FLOW_URL));
+      const isFlowTab = isSelectedTab(tab);
       if (isFlowTab) {
         const nextPinned = !tab.pinned;
         const updated = await chrome.tabs.update(tab.id, { pinned: nextPinned });
         tab = updated;
         updatePinButtonText();
       } else {
-        await chrome.tabs.create({ url: FLOW_URL, pinned: true });
+        await chrome.tabs.create({ url: selectedUrl(), pinned: true });
         window.close();
       }
     } catch (e) {

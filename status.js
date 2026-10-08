@@ -1,10 +1,11 @@
 (() => {
   'use strict';
 
-  const isBlocked = location.pathname.includes('/unsupported-country') || location.pathname === '/404';
+  const isPlayground = location.origin === 'https://playground.google';
+  const isBlocked = isPlayground ? location.pathname === '/region-unavailable' : location.pathname.includes('/unsupported-country') || location.pathname === '/404';
 
   // Автоматический переход со страницы блокировки или ошибочной 404
-  if (isBlocked) {
+  if (isBlocked && !isPlayground) {
     const key = 'uf_auto_redirect_tried';
     const lastTried = Number(sessionStorage.getItem(key) || 0);
     // Пробуем авто-переход с интервалом не чаще 10 секунд (защита от бесконечного цикла)

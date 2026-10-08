@@ -1,7 +1,7 @@
 const registration = {
   id: 'flow-helper',
-  matches: ['https://flow.google.com/*'],
-  js: ['hook.js'],
+  matches: ['https://flow.google.com/*', 'https://playground.google/*'],
+  js: ['hook.js', 'playground.js'],
   runAt: 'document_start',
   world: 'MAIN',
   persistAcrossSessions: true
@@ -49,8 +49,13 @@ async function refreshGlobalBadge() {
   } catch {}
 }
 
-// Reconcile badges whenever the worker starts, including after a reload.
-void refreshGlobalBadge();
+async function syncRegistration() {
+  const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [registration.id] });
+  if (existing.length) await chrome.scripting.updateContentScripts([registration]);
+}
+
+// Migrate enabled installations, preserving the OFF state across updates.
+void syncRegistration().catch(() => {}).then(refreshGlobalBadge);
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === 'install') {
@@ -60,6 +65,7 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
       console.error('Failed to register content script on install:', err.message);
     }
   }
+  if (reason === 'update') await syncRegistration();
   await refreshGlobalBadge();
 });
 
@@ -69,7 +75,7 @@ chrome.runtime.onStartup?.addListener(() => {
 
 // Watch Flow tabs and show dynamic badges
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (!tab?.url?.startsWith('https://flow.google.com/')) return;
+  if (!tab?.url?.startsWith('https://flow.google.com/') && !tab?.url?.startsWith('https://playground.google/')) return;
 
   if (changeInfo.status === 'loading') {
     void setBadge('RUN', tabId);

@@ -8,7 +8,7 @@
 }
 body {
   margin: 0;
-  width: 320px;
+  width: 360px;
   background: #fff;
 }
 main {
@@ -277,7 +277,7 @@ button.secondary:hover {
 }
 .tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 .tabs button {
@@ -720,3 +720,38 @@ footer a {
 [hidden] {
   display: none !important;
 }
+
+/* Shared service chooser and a single primary action. */
+main { padding: 16px; }
+.brand .brand-name { font-size: 13px; letter-spacing: -.02em; color: #0f172a; }
+.topbar-actions { gap: 4px; }
+h1 { margin-top: 18px; font-size: 23px; letter-spacing: -.04em; }
+.intro { margin-top: 6px; font-size: 12px; }
+.service-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.service-choice { margin: 0; padding: 13px 12px; text-align: left; font-size: 15px; color: #475569; background: #f8fafc; border-color: #e2e8f0; border-radius: 12px; }
+.service-choice span { display: block; margin-top: 4px; font-size: 11px; font-weight: 400; }
+.service-choice:hover { background: #eff6ff; border-color: #93c5fd; }
+.service-choice[aria-pressed="true"] { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; box-shadow: inset 0 0 0 1px #2563eb; }
+section { background: #f8fafc; border-color: #e2e8f0; padding: 12px; margin: 0; border-radius: 12px; }
+.toggle-hint { font-size: 11px; color: #64748b; margin: 4px 0 10px; }
+.status-row { padding-top: 10px; border-top: 1px solid #e2e8f0; align-items: flex-start; }
+.status-dot { margin-top: 5px; }
+#status { color: #475569; line-height: 1.5; }
+.service-hint { font-size: 12px; line-height: 1.5; color: #64748b; margin: 12px 0; min-height: 36px; }
+#open { padding: 12px 10px; font-size: 14px; border-radius: 10px; }
+#reload { margin-top: 8px; padding: 9px; font-size: 12px; border-color: #e2e8f0; color: #475569; }
+.tool-btn { background: transparent; font-weight: 500; }
+.help { margin-top: 14px; font-weight: 500; }
+footer { margin-top: 10px; }
+#error:empty { display: none; }
+button:focus-visible, a:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.status-dot.active { animation: none; box-shadow: none; }
+[data-theme="dark"] .brand .brand-name { color: #f4f4f5; }
+[data-theme="dark"] .service-choice { background: #18181b; border-color: #3f3f46; color: #d4d4d8; }
+[data-theme="dark"] .service-choice:hover { background: #1e293b; border-color: #60a5fa; }
+[data-theme="dark"] .service-choice[aria-pressed="true"] { background: #12213d; color: #93c5fd; border-color: #60a5fa; box-shadow: inset 0 0 0 1px #60a5fa; }
+[data-theme="dark"] .toggle-hint, [data-theme="dark"] .service-hint { color: #a1a1aa; }
+[data-theme="dark"] .status-row { border-color: #27272a; }
+[data-theme="dark"] #status { color: #d4d4d8; }
+[data-theme="dark"] #reload { color: #a1a1aa; border-color: #3f3f46; }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
