@@ -20,7 +20,9 @@ const files = [
   'fx.js',
   'fonts',
   'icons',
-  'README.txt'
+  'README.md',
+  'README.en.md',
+  'docs'
 ];
 
 // Keep the Firefox version in sync with the Chrome manifest.

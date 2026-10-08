@@ -66,7 +66,9 @@ const extensionFiles = [
   'fx.js',
   'fonts',
   'icons',
-  'README.txt'
+  'README.md',
+  'README.en.md',
+  'docs'
 ];
 
 // 1. Stage clean extension files for CRX packaging
