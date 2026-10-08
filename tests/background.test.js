@@ -4,6 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+// Badge glyphs from background.js STATUS_CONFIGS.
+const BADGE = { OFF: '', ON: '●', OK: '✓', ERR: '!' };
+
 function createWorker(enabled = false) {
   const events = {};
   const badges = new Map();
@@ -50,13 +53,13 @@ function createWorker(enabled = false) {
 test('disabled helper stays OFF during loading and page notifications', async () => {
   const worker = createWorker();
   await worker.flush();
-  assert.deepEqual([...worker.badges.values()], ['OFF', 'OFF', 'OFF']);
+  assert.deepEqual([...worker.badges.values()], [BADGE.OFF, BADGE.OFF, BADGE.OFF]);
   worker.events.updated(1, { status: 'loading' }, { url: 'https://flow.google.com/' });
   worker.events.message({ type: 'flowApplied' }, { id: 'unlock-flow', tab: { id: 1 } }, () => {});
   worker.events.message({ type: 'flowBlocked' }, { id: 'unlock-flow', tab: { id: 2 } }, () => {});
   worker.timers.forEach(fn => fn());
   await worker.flush();
-  assert(worker.writes.every(text => text === 'OFF'));
+  assert(worker.writes.every(text => text === BADGE.OFF));
 });
 
 test('switching OFF clears tab overrides and rejects late callbacks and timers', async () => {
@@ -65,9 +68,9 @@ test('switching OFF clears tab overrides and rejects late callbacks and timers',
   worker.events.updated(1, { status: 'complete' }, { url: 'https://flow.google.com/' });
   worker.events.message({ type: 'flowApplied' }, { id: 'unlock-flow', tab: { id: 1 } }, () => {});
   await worker.flush();
-  assert.equal(worker.badges.get(1), 'OK');
+  assert.equal(worker.badges.get(1), BADGE.OK);
   assert.equal((await worker.send({ type: 'setEnabled', enabled: false })).ok, true);
-  assert([...worker.badges.values()].every(text => text === 'OFF'));
+  assert([...worker.badges.values()].every(text => text === BADGE.OFF));
   worker.writes.length = 0;
   worker.callbacks[0]({ applied: true });
   worker.timers.forEach(fn => fn());
@@ -75,17 +78,17 @@ test('switching OFF clears tab overrides and rejects late callbacks and timers',
   worker.timers.forEach(fn => fn());
   await worker.flush();
   assert(worker.writes.length > 0);
-  assert(worker.writes.every(text => text === 'OFF'));
+  assert(worker.writes.every(text => text === BADGE.OFF));
 });
 
 test('repeating OFF reconciles stale overrides and switching ON updates all tabs', async () => {
   const worker = createWorker();
   await worker.flush();
-  worker.badges.set(1, 'ON');
+  worker.badges.set(1, BADGE.ON);
   await worker.send({ type: 'setEnabled', enabled: false });
-  assert.equal(worker.badges.get(1), 'OFF');
+  assert.equal(worker.badges.get(1), BADGE.OFF);
   await worker.send({ type: 'setEnabled', enabled: true });
-  assert([...worker.badges.values()].every(text => text === 'ON'));
+  assert([...worker.badges.values()].every(text => text === BADGE.ON));
 });
 
 test('a failed state check reports ERR instead of assuming ON', async () => {
@@ -94,5 +97,5 @@ test('a failed state check reports ERR instead of assuming ON', async () => {
   worker.failRegistrationQuery();
   worker.events.startup();
   await worker.flush();
-  assert([...worker.badges.values()].every(text => text === 'ERR'));
+  assert([...worker.badges.values()].every(text => text === BADGE.ERR));
 });

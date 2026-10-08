@@ -2,11 +2,8 @@
   "manifest_version": 3,
   "name": "Unlock flow",
   "version": "1.4.5",
-  "minimum_chrome_version": "111",
   "description": "Unlock Flow interface for Google Flow and Playground.",
   "author": "TotalCodeAdmin (https://t.me/TotalCodeAdmin)",
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvuTo+xoFdc45KeqQdO8TW4eJ8fAiM3uJb/3Wo93uaijKL+thf7cbBtBfNunOpsO/ubp0IVMymFcVk6MTBG25P0icrK3V9mtHDEI9hjbgexB0sjX40HOdRslsjxeMzG0hLERs23OhU1OBqzUqmccXG61iVqlKC8ftaoF2/FGsAD+POxklki/ks23nQeEiIsWMX66BpolYeUvjFu5+7Bap689TLJcZ6ptqMcoVn4bQEKIxmsRODGdTd/aYQk9O9xI522ROZx0XApiZd2iGSnnkMJ0j//bsIQBYahqnpkwUzGHHmXGuFN5MIMtpny2E+fc68VA3fhxns6Dbr/3lMe+KawIDAQAB",
-  "update_url": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
   "permissions": [
     "scripting",
     "tabs",
@@ -18,7 +15,9 @@
     "https://raw.githubusercontent.com/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": [
+      "background.js"
+    ]
   },
   "action": {
     "default_title": "Unlock flow",
@@ -47,5 +46,16 @@
       ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "unlock-flow@totalcode",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  }
 }

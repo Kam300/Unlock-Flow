@@ -1,9 +1,9 @@
 {
-  "version": "1.4.4",
-  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.4.zip",
-  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.4.crx",
-  "crxVersion": "1.4.4",
+  "version": "1.4.5",
+  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.5.zip",
+  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.5.crx",
+  "crxVersion": "1.4.5",
   "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
-  "changelog": "Версия 1.4.4: Ожидание настройки игрового профиля Playground, исправленный выбор кнопки каталога и защита от преждевременной перезагрузки.",
-  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.4.zip"
+  "changelog": "Версия 1.4.5: Дизайн в стиле iOS для Flow и Playground, автоматическая тема, анимации и отдельная сборка Firefox.",
+  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.5.zip"
 }

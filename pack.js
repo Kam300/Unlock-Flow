@@ -14,7 +14,7 @@ if (!fs.existsSync(DIST_DIR)) {
 }
 
 // Check key location (prefer parent directory so it's never committed or packed)
-let keyPath = path.resolve(PROJECT_DIR, '..', 'key.pem');
+let keyPath = process.env.UNLOCK_FLOW_KEY_PATH || path.resolve(PROJECT_DIR, '..', 'key.pem');
 if (!fs.existsSync(keyPath)) {
   keyPath = path.join(PROJECT_DIR, 'key.pem');
 }
@@ -62,6 +62,9 @@ const extensionFiles = [
   'popup.html',
   'popup.css',
   'popup.js',
+  'fx.css',
+  'fx.js',
+  'fonts',
   'icons',
   'README.txt'
 ];
@@ -113,6 +116,14 @@ try {
   console.log(`Created clean ZIP: dist/${zipName} (${(fs.statSync(targetZip).size / 1024).toFixed(1)} KB)`);
 } catch (e) {
   console.error('Could not create ZIP:', e.message);
+  process.exit(1);
+}
+
+// 2b. Firefox build (same sources, manifest.firefox.json)
+try {
+  execSync(`"${process.execPath}" "${path.join(PROJECT_DIR, 'pack-firefox.js')}"`, { stdio: 'inherit' });
+} catch (e) {
+  console.error('Could not create Firefox ZIP:', e.message);
   process.exit(1);
 }
 

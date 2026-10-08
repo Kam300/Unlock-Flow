@@ -8,7 +8,8 @@ function setup({ enabled = true, active = 1, statuses = {} } = {}) {
   const elements = new Map();
   function element() {
     const classes = new Set();
-    return { textContent: '', innerHTML: '', hidden: false, checked: false,
+    return { textContent: '', innerHTML: '', hidden: false, checked: false, dataset: {},
+      closest(selector) { return selector === 'section' ? null : this; },
       attributes: {}, listeners: {},
       setAttribute(k, v) { this.attributes[k] = v; }, removeAttribute(k) { delete this.attributes[k]; },
       addEventListener(k, fn) { this.listeners[k] = fn; }, appendChild() {},
@@ -24,7 +25,7 @@ function setup({ enabled = true, active = 1, statuses = {} } = {}) {
   ];
   const actions = [];
   const chrome = {
-    runtime: { getManifest: () => ({ version: '1.4.3' }), async sendMessage(message) {
+    runtime: { getURL: () => 'chrome-extension://test/', getManifest: () => ({ version: '1.4.5' }), async sendMessage(message) {
       actions.push(message); enabled = message.enabled; return { ok: true };
     } },
     scripting: { async getRegisteredContentScripts() { return enabled ? [{ id: 'flow-helper' }] : []; } },

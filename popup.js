@@ -68,6 +68,18 @@
       checkingUpdate: 'Проверка…',
       themeDark: 'Тёмная тема',
       themeLight: 'Светлая тема',
+      themeModeAuto: 'Тема: как в системе',
+      themeModeLight: 'Тема: светлая',
+      themeModeDark: 'Тема: тёмная',
+      tipOpen: 'Открыть выбранный сервис. Уже открытая вкладка будет использована повторно.',
+      tipReload: 'Повторить вход в выбранный сервис',
+      tipPin: 'Закреплённая вкладка не закроется случайно',
+      tipOpenPinned: 'Открыть выбранный сервис в закреплённой вкладке',
+      tipToggle: 'Включить помощь со входом для Flow и Playground',
+      tipHelp: 'Канал автора в Telegram',
+      tipRu: 'Русский',
+      tipEn: 'English',
+      celebrate: 'Разблокировано',
       modalCheckingTitle: 'Unlock Flow',
       modalChecking: 'Проверка наличия обновлений…',
       modalUpToDateTitle: 'У вас последняя версия',
@@ -120,6 +132,18 @@
       checkingUpdate: 'Checking…',
       themeDark: 'Dark theme',
       themeLight: 'Light theme',
+      themeModeAuto: 'Theme: system',
+      themeModeLight: 'Theme: light',
+      themeModeDark: 'Theme: dark',
+      tipOpen: 'Open the selected service. An existing tab will be reused.',
+      tipReload: 'Retry access to the selected service',
+      tipPin: 'A pinned tab won\'t get closed by accident',
+      tipOpenPinned: 'Open the selected service in a pinned tab',
+      tipToggle: 'Enable access help for Flow and Playground',
+      tipHelp: 'Author\'s Telegram channel',
+      tipRu: 'Русский',
+      tipEn: 'English',
+      celebrate: 'Unlocked',
       modalCheckingTitle: 'Unlock Flow',
       modalChecking: 'Checking for updates…',
       modalUpToDateTitle: 'You are up to date',
@@ -176,22 +200,29 @@
   const checkUpdateBtn = document.getElementById('check-update');
   const versionBtn = document.getElementById('version-btn');
 
+  // Theme mode: 'auto' follows the OS, 'light'/'dark' are manual overrides.
+  const THEME_MODES = ['auto', 'light', 'dark'];
+  const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  const THEME_ICONS = {
+    auto: '<circle cx="12" cy="12" r="9"></circle><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"></path>',
+    light: '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>',
+    dark: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>'
+  };
+  const THEME_TITLES = { auto: 'themeModeAuto', light: 'themeModeLight', dark: 'themeModeDark' };
+
   function getStoredTheme() {
     try {
       const v = localStorage.getItem(THEME_KEY);
-      if (v === 'dark' || v === 'light') return v;
+      if (THEME_MODES.includes(v)) return v;
     } catch {}
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
+    return 'auto';
   }
 
   let currentTheme = getStoredTheme();
 
   function applyTheme(next) {
     if (next) currentTheme = next;
-    const isDark = currentTheme === 'dark';
+    const isDark = currentTheme === 'dark' || (currentTheme === 'auto' && Boolean(darkQuery?.matches));
     if (isDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
     } else {
@@ -199,27 +230,25 @@
     }
 
     if (themeToggle) {
-      const title = isDark ? t('themeLight') : t('themeDark');
+      const title = t(THEME_TITLES[currentTheme]);
       themeToggle.title = title;
       themeToggle.setAttribute('aria-label', title);
     }
 
-    if (themeIcon) {
-      if (isDark) {
-        themeIcon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
-      } else {
-        themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
-      }
-    }
+    if (themeIcon) themeIcon.innerHTML = THEME_ICONS[currentTheme];
   }
 
   function toggleTheme() {
-    const next = currentTheme === 'dark' ? 'light' : 'dark';
+    const next = THEME_MODES[(THEME_MODES.indexOf(currentTheme) + 1) % THEME_MODES.length];
     try {
       localStorage.setItem(THEME_KEY, next);
     } catch {}
     applyTheme(next);
   }
+
+    darkQuery?.addEventListener?.('change', () => {
+    if (currentTheme === 'auto') applyTheme();
+  });
 
   applyTheme(currentTheme);
 
@@ -298,10 +327,41 @@
     modalOverlay.hidden = false;
   }
 
+  // Status glyphs: locked (off), hourglass (working), unlocked (ok), warning (error).
+  const STATUS_ICONS = {
+    off: '<path d="M8 10V7a4 4 0 0 1 8 0v3"/><path fill="currentColor" stroke="none" fill-rule="evenodd" d="M7.5 10h9a2.5 2.5 0 0 1 2.5 2.5v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18.5v-6A2.5 2.5 0 0 1 7.5 10zM12 13.6a1.7 1.7 0 0 0-.9 3.15V18.4h1.8v-1.65A1.7 1.7 0 0 0 12 13.6z"/>',
+    loading: '<path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/>',
+    active: '<path d="M8 10V7a4 4 0 0 1 7.75-1.4"/><path fill="currentColor" stroke="none" fill-rule="evenodd" d="M7.5 10h9a2.5 2.5 0 0 1 2.5 2.5v6a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 18.5v-6A2.5 2.5 0 0 1 7.5 10zM12 13.6a1.7 1.7 0 0 0-.9 3.15V18.4h1.8v-1.65A1.7 1.7 0 0 0 12 13.6z"/>',
+    error: '<path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  };
+
   function setStatusDot(type) {
     if (!statusDot) return;
+    const key = type || 'off';
     statusDot.className = 'status-dot';
     if (type) statusDot.classList.add(type);
+    if (statusDot.dataset.icon === key) return;
+    statusDot.dataset.icon = key;
+    statusDot.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${STATUS_ICONS[key]}</svg>`;
+  }
+
+  // Plays the "unlocked" checkmark once per Flow tab per browser session.
+  async function celebrateUnlock() {
+    if (!tab?.id) return;
+    const key = `uf_celebrated_${tab.id}`;
+    const store = chrome.storage.session;
+    try {
+      if (store && (await store.get(key))[key]) return;
+      await store?.set({ [key]: true });
+    } catch {}
+    const section = toggle.closest('section');
+    if (!section || section.querySelector('.celebrate')) return;
+    const el = document.createElement('div');
+    el.className = 'celebrate';
+    el.innerHTML = `<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg><span></span>`;
+    el.querySelector('span').textContent = t('celebrate');
+    section.appendChild(el);
+    setTimeout(() => el.remove(), 1900);
   }
 
   function paintLangButtons() {
@@ -324,6 +384,12 @@
     playgroundChoice.setAttribute('aria-pressed', String(selectedService === 'playground'));
     reloadBtn.textContent = t('reload');
     helpEl.textContent = t('help');
+    openBtn.title = t('tipOpen');
+    reloadBtn.title = t('tipReload');
+    langRuBtn.title = t('tipRu');
+    langEnBtn.title = t('tipEn');
+    toggle.closest('label').title = t('tipToggle');
+    helpEl.closest('a').title = t('tipHelp');
     checkUpdateBtn.title = t('checkUpdate');
     checkUpdateBtn.setAttribute('aria-label', t('checkUpdate'));
     if (versionBtn) {
@@ -342,11 +408,11 @@
       const isPinned = Boolean(tab?.pinned);
       pinBtn.classList.toggle('pinned', isPinned);
       pinText.textContent = isPinned ? t('unpinTab') : t('pinTab');
-      pinBtn.title = isPinned ? t('unpinTab') : t('pinTab');
+      pinBtn.title = t('tipPin');
     } else {
       pinBtn.classList.remove('pinned');
       pinText.textContent = t('openPinned');
-      pinBtn.title = t('openPinned');
+      pinBtn.title = t('tipOpenPinned');
     }
   }
 
@@ -414,6 +480,7 @@
         } else if (res?.applied) {
           statusEl.textContent = t('applied');
           setStatusDot('active');
+          void celebrateUnlock();
         } else if (res?.isBlockedPage) {
           statusEl.textContent = t('blockedPage');
           setStatusDot('error');
@@ -606,6 +673,7 @@
   }
 
   toggle.addEventListener('change', async () => {
+    try { navigator.vibrate?.(10); } catch {}
     toggle.disabled = true;
     errorEl.textContent = '';
     try {
@@ -713,8 +781,15 @@
   };
 
   if (themeToggle) themeToggle.onclick = toggleTheme;
-  checkUpdateBtn.onclick = handleCheckUpdate;
-  if (versionBtn) versionBtn.onclick = handleCheckUpdate;
+  // The updater downloads Chrome builds, so it is hidden in the Firefox build.
+  const isFirefox = chrome.runtime.getURL('').startsWith('moz-extension:');
+  if (isFirefox) {
+    checkUpdateBtn.style.display = 'none';
+    if (versionBtn) versionBtn.disabled = true;
+  } else {
+    checkUpdateBtn.onclick = handleCheckUpdate;
+    if (versionBtn) versionBtn.onclick = handleCheckUpdate;
+  }
 
   modalCloseBtn.onclick = closeModal;
   modalOverlay.onclick = (e) => {

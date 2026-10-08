@@ -34,3 +34,17 @@ If your old version has no restart button, reload its card in chrome://extension
 Не удаляйте расширение и не загружайте вторую копию.
 Если в старой версии нет кнопки перезапуска, один раз нажмите ↻
 на карточке расширения в chrome://extensions.
+
+Firefox (142+):
+Use Unlock-Flow-Firefox-v<version>.zip.
+Temporary: about:debugging#/runtime/this-firefox -> Load Temporary Add-on -> select the ZIP.
+This Firefox ZIP is unsigned. Temporary installation is removed when Firefox closes.
+Permanent installation requires a Firefox-signed build.
+The in-popup updater is hidden in Firefox: download new versions from GitHub manually.
+
+Firefox (142+):
+Используйте Unlock-Flow-Firefox-v<версия>.zip.
+Временно: about:debugging#/runtime/this-firefox -> «Загрузить временное дополнение…» -> выбрать ZIP.
+ZIP для Firefox не подписан. Временная установка удаляется после закрытия Firefox.
+Для постоянной установки нужна сборка с подписью Firefox.
+Проверка обновлений в Firefox скрыта: новые версии скачивайте с GitHub вручную.
