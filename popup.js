@@ -26,7 +26,9 @@
 
   const UPDATE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/version.json';
   const ZIP_BASE_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/';
-  let updateZipUrl = `${ZIP_BASE_URL}Unlock-Flow-v${chrome.runtime.getManifest().version}.zip`;
+  const isFirefox = chrome.runtime.getURL('').startsWith('moz-extension:');
+  function archiveUrl(version) { return `${ZIP_BASE_URL}Unlock-Flow-${isFirefox ? 'Firefox-' : ''}v${version}.zip`; }
+  let updateZipUrl = archiveUrl(chrome.runtime.getManifest().version);
   const PENDING_UPDATE_KEY = 'uf_pending_update';
   const GITHUB_REPO = 'https://github.com/Kam300/Unlock-Flow';
   const GITHUB_RELEASES = 'https://github.com/Kam300/Unlock-Flow/releases';
@@ -88,6 +90,7 @@
       modalUpdateDesc: 'Вышло обновление расширения. Рекомендуется установить его для стабильной работы.',
       modalDownloadBtn: 'Скачать обновление',
       modalUpdateSteps: 'Распакуйте ZIP в прежнюю папку расширения с заменой файлов. Затем нажмите кнопку ниже и обновите вкладку сервиса. Удалять расширение не нужно.',
+      firefoxUpdateSteps: 'Скачайте ZIP для Firefox. Откройте about:debugging#/runtime/this-firefox и нажмите «Загрузить временное дополнение…», затем выберите новый ZIP. Если Firefox не позволяет заменить дополнение, удалите прежнюю временную копию на этой странице и загрузите ZIP снова.',
       modalRestartBtn: 'Файлы заменены — перезапустить',
       modalInstallTitle: 'Завершить обновление',
       modalRestartFailed: 'Не удалось перезапустить расширение. Попробуйте ещё раз или нажмите ↻ на его карточке в chrome://extensions.',
@@ -152,6 +155,7 @@
       modalUpdateDesc: 'An update is available. We recommend updating for the best stability.',
       modalDownloadBtn: 'Download Update',
       modalUpdateSteps: 'Extract the ZIP into the existing extension folder and replace the files. Then click the button below and refresh the service tab. You do not need to remove the extension.',
+      firefoxUpdateSteps: 'Download the Firefox ZIP. Open about:debugging#/runtime/this-firefox, click “Load Temporary Add-on…”, and select the new ZIP. If Firefox cannot replace it, remove the previous temporary add-on on that page and load the ZIP again.',
       modalRestartBtn: 'Files replaced — restart',
       modalInstallTitle: 'Finish updating',
       modalRestartFailed: 'Could not restart the extension. Try again or click ↻ on its card in chrome://extensions.',
@@ -174,6 +178,7 @@
   let lang = getLang();
 
   function t(key, param) {
+    if (key === 'modalUpdateSteps' && isFirefox) key = 'firefoxUpdateSteps';
     let str = STRINGS[lang]?.[key] ?? STRINGS[DEFAULT_LANG]?.[key] ?? key;
     if (param !== undefined) {
       str = str.replace('{version}', param);
@@ -311,7 +316,7 @@
       return el;
     }
 
-    actions.forEach((item) => {
+    actions.filter(Boolean).forEach((item) => {
       if (item.row) {
         const rowDiv = document.createElement('div');
         rowDiv.className = 'modal-btn-row';
@@ -515,10 +520,16 @@
   }
 
   function restartUpdateAction() {
+    if (isFirefox) return null;
     return { label: t('modalRestartBtn'), isPrimary: false, onClick: restartExtension };
   }
 
   function showUpdateSteps() {
+    if (isFirefox) {
+      openModal({ type: 'info', title: t('modalInstallTitle'), bodyHtml: `<p>${t('modalUpdateSteps')}</p>`,
+        actions: [{ label: t('modalDownloadBtn'), isPrimary: true, onClick: downloadUpdate }, { label: t('modalCloseBtn'), onClick: closeModal }] });
+      return;
+    }
     openModal({
       type: 'new-ver',
       title: t('modalInstallTitle'),
@@ -535,7 +546,7 @@
     try {
       // The popup closes when a download tab opens. Resume the instructions
       // on the next popup opening, without requiring another network check.
-      await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: updateZipUrl });
+      if (!isFirefox) await chrome.storage.local.set({ [PENDING_UPDATE_KEY]: updateZipUrl });
       await chrome.tabs.create({ url: `${updateZipUrl}?t=${Date.now()}` });
     } catch (e) {
       errorEl.textContent = e?.message || String(e);
@@ -560,6 +571,7 @@
   }
 
   async function hasPendingUpdate() {
+    if (isFirefox) return false;
     const pending = (await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY];
     if (typeof pending === 'string' && /^https:\/\/raw\.githubusercontent\.com\/Kam300\/Unlock-Flow\/main\/dist\/Unlock-Flow-v\d+\.\d+\.\d+(?:\.\d+)?\.zip$/.test(pending)) {
       updateZipUrl = pending;
@@ -596,11 +608,11 @@
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const remoteVersion = data?.version;
+      const remoteVersion = isFirefox ? (data?.firefoxVersion ?? data?.version) : data?.version;
       if (typeof remoteVersion !== 'string' || !/^\d+\.\d+\.\d+(?:\.\d+)?$/.test(remoteVersion)) {
         throw new Error('Invalid update version');
       }
-      updateZipUrl = `${ZIP_BASE_URL}Unlock-Flow-v${remoteVersion}.zip`;
+      updateZipUrl = archiveUrl(remoteVersion);
 
       if (remoteVersion && compareVersions(remoteVersion, currentVersion) > 0) {
         const changelogHtml = data.changelog ? `<div class="modal-changelog">${escapeHtml(data.changelog)}</div>` : '';
@@ -781,15 +793,8 @@
   };
 
   if (themeToggle) themeToggle.onclick = toggleTheme;
-  // The updater downloads Chrome builds, so it is hidden in the Firefox build.
-  const isFirefox = chrome.runtime.getURL('').startsWith('moz-extension:');
-  if (isFirefox) {
-    checkUpdateBtn.style.display = 'none';
-    if (versionBtn) versionBtn.disabled = true;
-  } else {
-    checkUpdateBtn.onclick = handleCheckUpdate;
-    if (versionBtn) versionBtn.onclick = handleCheckUpdate;
-  }
+  checkUpdateBtn.onclick = handleCheckUpdate;
+  if (versionBtn) versionBtn.onclick = handleCheckUpdate;
 
   modalCloseBtn.onclick = closeModal;
   modalOverlay.onclick = (e) => {

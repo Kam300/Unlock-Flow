@@ -40,11 +40,13 @@ Use Unlock-Flow-Firefox-v<version>.zip.
 Temporary: about:debugging#/runtime/this-firefox -> Load Temporary Add-on -> select the ZIP.
 This Firefox ZIP is unsigned. Temporary installation is removed when Firefox closes.
 Permanent installation requires a Firefox-signed build.
-The in-popup updater is hidden in Firefox: download new versions from GitHub manually.
+The popup checks for updates and downloads the Firefox ZIP. Load the new ZIP
+through about:debugging to apply the update; the Chrome restart button is not used.
 
 Firefox (142+):
 Используйте Unlock-Flow-Firefox-v<версия>.zip.
 Временно: about:debugging#/runtime/this-firefox -> «Загрузить временное дополнение…» -> выбрать ZIP.
 ZIP для Firefox не подписан. Временная установка удаляется после закрытия Firefox.
 Для постоянной установки нужна сборка с подписью Firefox.
-Проверка обновлений в Firefox скрыта: новые версии скачивайте с GitHub вручную.
+В Firefox проверка обновлений доступна в окне расширения и скачивает ZIP для Firefox.
+Новую сборку загрузите через about:debugging; кнопка перезапуска Chrome не используется.

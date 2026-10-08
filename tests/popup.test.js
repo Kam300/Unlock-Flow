@@ -4,15 +4,15 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-function setup({ enabled = true, active = 1, statuses = {} } = {}) {
+function setup({ enabled = true, active = 1, statuses = {}, firefox = false, fetchFails = false, remote = { version: '1.4.6', firefoxVersion: '1.4.6' } } = {}) {
   const elements = new Map();
   function element() {
     const classes = new Set();
-    return { textContent: '', innerHTML: '', hidden: false, checked: false, dataset: {},
+    return { textContent: '', innerHTML: '', hidden: false, checked: false, dataset: {}, children: [],
       closest(selector) { return selector === 'section' ? null : this; },
       attributes: {}, listeners: {},
       setAttribute(k, v) { this.attributes[k] = v; }, removeAttribute(k) { delete this.attributes[k]; },
-      addEventListener(k, fn) { this.listeners[k] = fn; }, appendChild() {},
+      addEventListener(k, fn) { this.listeners[k] = fn; }, appendChild(child) { this.children.push(child); },
       classList: { add: k => classes.add(k), remove: k => classes.delete(k),
         toggle(k, value) { value ? classes.add(k) : classes.delete(k); } },
     };
@@ -25,11 +25,11 @@ function setup({ enabled = true, active = 1, statuses = {} } = {}) {
   ];
   const actions = [];
   const chrome = {
-    runtime: { getURL: () => 'chrome-extension://test/', getManifest: () => ({ version: '1.4.5' }), async sendMessage(message) {
+    runtime: { getURL: () => firefox ? 'moz-extension://test/' : 'chrome-extension://test/', getManifest: () => ({ version: '1.4.5' }), async sendMessage(message) {
       actions.push(message); enabled = message.enabled; return { ok: true };
     } },
     scripting: { async getRegisteredContentScripts() { return enabled ? [{ id: 'flow-helper' }] : []; } },
-    storage: { local: { async get() { return {}; } } },
+    storage: { local: { async get() { return {}; }, async set(data) { actions.push({ storage: data }); } } },
     tabs: {
       async query(options) { return options.active ? tabs.filter(t => t.active) : tabs; },
       async get(id) { return tabs.find(t => t.id === id); },
@@ -40,7 +40,9 @@ function setup({ enabled = true, active = 1, statuses = {} } = {}) {
     },
   };
   const context = { document, chrome, window: { matchMedia: () => ({ matches: false }), close() {} },
-    localStorage: { getItem() { return null; }, setItem() {} }, URL, setTimeout() {}, clearTimeout() {} };
+    localStorage: { getItem() { return null; }, setItem() {} }, URL, AbortController,
+    async fetch() { if (fetchFails) throw new Error('Offline'); return { ok: true, async json() { return remote; } }; },
+    setTimeout() {}, clearTimeout() {} };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'popup.js'), 'utf8'), context);
   return { get: id => document.getElementById(id), actions, tabs };
 }
@@ -96,4 +98,36 @@ test('profile setup is shown as a waiting step and hides the retry button', asyn
   assert.match(ui.get('status').textContent, /Завершите настройку профиля/);
   assert.equal(ui.get('reload').hidden, true);
   assert.equal(ui.get('enabled').checked, true);
+});
+
+test('Firefox update check is available and downloads its own archive without Chrome restart actions', async () => {
+  const ui = setup({ firefox: true }); await settle();
+  assert.equal(typeof ui.get('check-update').onclick, 'function');
+  assert.equal(typeof ui.get('version-btn').onclick, 'function');
+  await ui.get('check-update').onclick();
+  assert.match(ui.get('modal-body').innerHTML, /about:debugging/);
+  assert.equal(ui.get('modal-actions').children.some(item => item.textContent.includes('перезапустить')), false);
+  await ui.get('modal-actions').children[0].onclick();
+  assert.match(ui.actions.at(-1).url, /Unlock-Flow-Firefox-v1\.4\.6\.zip\?t=/);
+  assert.equal(ui.actions.some(item => item.storage), false);
+});
+
+test('Chrome update check still downloads the Chrome archive and saves update instructions', async () => {
+  const ui = setup(); await settle(); await ui.get('check-update').onclick();
+  assert.match(ui.get('modal-body').innerHTML, /Распакуйте ZIP/);
+  await ui.get('modal-actions').children[0].onclick();
+  assert.match(ui.actions.at(-1).url, /Unlock-Flow-v1\.4\.6\.zip\?t=/);
+  assert.equal(ui.actions.some(item => item.storage), true);
+});
+
+test('offline Firefox fallback downloads the installed Firefox version', async () => {
+  const ui = setup({ firefox: true, fetchFails: true }); await settle(); await ui.get('check-update').onclick();
+  await ui.get('modal-actions').children[0].onclick();
+  assert.match(ui.actions.at(-1).url, /Unlock-Flow-Firefox-v1\.4\.5\.zip\?t=/);
+});
+
+test('Firefox compares its platform version rather than a newer Chrome-only version', async () => {
+  const ui = setup({ firefox: true, remote: { version: '1.4.6', firefoxVersion: '1.4.5' } });
+  await settle(); await ui.get('check-update').onclick();
+  assert.equal(ui.get('modal-title').textContent, 'У вас последняя версия');
 });

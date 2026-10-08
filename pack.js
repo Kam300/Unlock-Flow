@@ -144,6 +144,8 @@ if (fs.existsSync(VERSION_JSON_PATH)) {
   vJson.version = version;
   vJson.crxUrl = `https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/${crxName}`;
   vJson.crxVersion = version;
+  vJson.firefoxVersion = version;
+  vJson.firefoxUrl = `https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-Firefox-v${version}.zip`;
   vJson.zipUrl = `https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/${zipName}`;
   vJson.downloadUrl = vJson.zipUrl;
   if (!vJson.changelog) vJson.changelog = `Версия ${version}`;
