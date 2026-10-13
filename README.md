@@ -2,11 +2,13 @@
 
 Unlock Flow — расширение для Chrome и Firefox, которое помогает открыть Google Flow и каталог Playground при региональных ограничениях. Оно автоматически применяет способ входа для выбранного сервиса: Flow для создания видео или Playground для просмотра игр.
 
+Также доступен скрипт для Tampermonkey с той же логикой входа для обоих сервисов.
+
 В одном окне можно выбрать сервис, включить помощь со входом, открыть или закрепить вкладку и проверить обновления. При первом входе в Playground расширение ждёт, пока вы завершите настройку игрового профиля Google, затем продолжает переход в каталог.
 
 Для Playground проверен вход в каталог; доступ к созданию игр и лимиты аккаунта зависят от Google и отдельно не проверялись.
 
-[Скачать расширение и обновления](https://github.com/Kam300/Unlock-Flow/releases) · [Канал автора в Telegram](https://t.me/TotalC0de) · [English](README.en.md)
+[Скачать расширение и обновления](https://github.com/Kam300/Unlock-Flow/releases) · [<img src="docs/icons/telegram.svg" width="18" height="18" alt="Telegram"> Канал автора в Telegram](https://t.me/TotalC0de) · [English](README.en.md)
 
 ## Скриншоты
 
@@ -18,8 +20,9 @@ Flow в светлой теме и Playground в тёмной. Статусы н
 
 ## Какой файл скачать
 
-- Chrome: `Unlock-Flow-v<версия>.zip`, например `Unlock-Flow-v1.4.6.zip`.
+- Chrome: `Unlock-Flow-v<версия>.zip`, например `Unlock-Flow-v1.4.7.zip`.
 - Firefox: `Unlock-Flow-Firefox-v<версия>.zip`.
+- Tampermonkey: `Unlock-Flow-Tampermonkey-v<версия>.user.js` — один скрипт для Flow и Playground.
 - Архивы Source code на странице релиза — исходники проекта. Для установки
    выбирайте готовый ZIP расширения с названием Unlock-Flow.
 
@@ -64,7 +67,37 @@ Flow в светлой теме и Playground в тёмной. Статусы н
 В версии 1.4.5 скачайте новый Firefox ZIP со страницы релизов вручную.
 Кнопка «Файлы заменены — перезапустить» предназначена для Chrome.
 
-## Как пользоваться
+## Установка через Tampermonkey
+
+1. Установите [Tampermonkey](https://www.tampermonkey.net/) для своего браузера.
+2. Откройте [скрипт установки](https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/tampermonkey/unlock-flow.user.js)
+   и нажмите «Установить» в Tampermonkey.
+3. Откройте или обновите вкладку [Flow](https://flow.google.com/)
+   или [Playground](https://playground.google/404?login_success=1&pli=1).
+
+В Chrome разрешите Tampermonkey запуск пользовательских скриптов:
+`chrome://extensions` → Tampermonkey → «Подробнее» → «Разрешить пользовательские скрипты».
+Если этого пункта нет, включите «Режим разработчика».
+[Инструкция Tampermonkey](https://www.tampermonkey.net/faq.php?locale=en#Q209).
+
+Локальная установка: откройте файл `tampermonkey/unlock-flow.user.js`, скопируйте
+его целиком в Tampermonkey → «Создать новый скрипт» и сохраните через Ctrl+S.
+
+**Обновление:** Tampermonkey проверяет обновления автоматически. Для ручной
+проверки откройте его панель управления и выберите проверку обновлений скрипта.
+После обновления перезагрузите вкладку сервиса.
+
+Выберите один вариант установки: расширение Unlock Flow или скрипт.
+У скрипта нет окна расширения; включение и выключение доступны в Tampermonkey.
+После переключения обновите вкладку сервиса. В Firefox скрипт сохраняется
+между перезапусками браузера. При первом входе в Playground завершите настройку
+игрового профиля Google; скрипт дождётся её окончания.
+
+Для разработчиков: `node pack-userscript.js` собирает скрипт из `hook.js` и
+`playground.js` и создаёт файл для релиза в `dist/`. Проверка актуальности:
+`node pack-userscript.js --check`.
+
+## Как пользоваться расширением
 
 Выберите Flow или Playground и нажмите основную кнопку открытия.
 «Включить и открыть» включает помощь и открывает сервис одним нажатием.

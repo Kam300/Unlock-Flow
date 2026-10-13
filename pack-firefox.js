@@ -4,6 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+// Also runs when the Chrome packer invokes this build.
+require('./pack-userscript').writeUserscript();
+
 const PROJECT_DIR = __dirname;
 const DIST_DIR = path.join(PROJECT_DIR, 'dist');
 const STAGE_DIR = path.join(PROJECT_DIR, '_ff_stage');
@@ -22,7 +25,8 @@ const files = [
   'icons',
   'README.md',
   'README.en.md',
-  'docs'
+  'docs',
+  'tampermonkey'
 ];
 
 // Keep the Firefox version in sync with the Chrome manifest.

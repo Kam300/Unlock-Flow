@@ -1,11 +1,11 @@
 {
-  "version": "1.4.6",
-  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.6.zip",
-  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.6.crx",
-  "crxVersion": "1.4.6",
+  "version": "1.4.7",
+  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.7.zip",
+  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.7.crx",
+  "crxVersion": "1.4.7",
   "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
-  "changelog": "Версия 1.4.6: Возвращена проверка обновлений в Firefox; скачивается Firefox-сборка и показывается отдельная инструкция установки.",
-  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.6.zip",
-  "firefoxVersion": "1.4.6",
-  "firefoxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-Firefox-v1.4.6.zip"
+  "changelog": "Версия 1.4.7: Добавлен скрипт Tampermonkey для Flow и Playground с автообновлением. Добавлена обработка дополнительных проверок страны Flow. Исправлена повторная отправка запросов при ошибке разбора ответа. Обновлены инструкции установки.",
+  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.7.zip",
+  "firefoxVersion": "1.4.7",
+  "firefoxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-Firefox-v1.4.7.zip"
 }

@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '..', 'playground.js'), 'utf8');
 
-function run(page, lastAttempt = null, origin = 'https://playground.google') {
+function run(page, lastAttempt = null, origin = 'https://playground.google', script = source) {
   const attrs = new Map(), storage = new Map(), timers = new Map(), events = new Map();
   let now = Date.now(), timerId = 0, dialog = false;
   if (lastAttempt) storage.set('uf_playground_entry_attempt', String(lastAttempt));
@@ -29,7 +29,7 @@ function run(page, lastAttempt = null, origin = 'https://playground.google') {
     setTimeout(fn, delay) { timers.set(++timerId, { fn, due: now + delay }); return timerId; },
     clearTimeout(id) { timers.delete(id); }
   };
-  vm.runInNewContext(source, context);
+  vm.runInNewContext(script, context);
   return { location, storage, timers, attrs, context,
     diagnostic() { return JSON.parse(attrs.get('data-flow-local-diagnostic')); },
     mountMenu() { links = [logo, menu]; callback(); },
@@ -105,4 +105,26 @@ test('Flow pages are untouched by the Playground helper', () => {
   const app = run('/404', null, 'https://flow.google.com');
   assert.equal(app.attrs.size, 0);
   assert.equal(app.location.redirect, undefined);
+});
+
+const userscript = fs.readFileSync(path.join(__dirname, '../tampermonkey/unlock-flow.user.js'), 'utf8');
+
+test('Tampermonkey build redirects Playground blocking pages with the same cooldown', () => {
+  const app = run('/region-unavailable', null, 'https://playground.google', userscript);
+  assert.equal(app.location.redirect, 'https://playground.google/404?login_success=1&pli=1');
+  const recent = run('/region-unavailable', Date.now(), 'https://playground.google', userscript);
+  assert.equal(recent.location.redirect, undefined);
+  assert.equal(recent.diagnostic().state, 'playground-entry-failed');
+});
+
+test('Tampermonkey build waits for the Playground profile and continues to the catalog', () => {
+  const app = run('/404', null, 'https://playground.google', userscript);
+  app.mountMenu(); app.setupProfile(true); app.advance(90000);
+  assert.equal(app.diagnostic().state, 'playground-setup');
+  assert.equal(app.clicks, 0);
+  app.setupProfile(false);
+  assert.equal(app.clicks, 1);
+  app.enterCatalog();
+  assert.equal(app.diagnostic().state, 'playground-ready');
+  assert.equal(app.disconnected, true);
 });

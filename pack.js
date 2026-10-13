@@ -8,6 +8,8 @@ const MANIFEST_PATH = path.join(PROJECT_DIR, 'manifest.json');
 const UPDATES_XML_PATH = path.join(PROJECT_DIR, 'updates.xml');
 const VERSION_JSON_PATH = path.join(PROJECT_DIR, 'version.json');
 
+require('./pack-userscript').writeUserscript();
+
 // Ensure dist directory exists
 if (!fs.existsSync(DIST_DIR)) {
   fs.mkdirSync(DIST_DIR, { recursive: true });
@@ -68,7 +70,8 @@ const extensionFiles = [
   'icons',
   'README.md',
   'README.en.md',
-  'docs'
+  'docs',
+  'tampermonkey'
 ];
 
 // 1. Stage clean extension files for CRX packaging

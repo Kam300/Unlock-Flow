@@ -46,9 +46,68 @@
     return { body: lines.join('\n'), before: beforeValue };
   }
 
+  function patchAvailability(rawBody) {
+    const data = JSON.parse(rawBody);
+    const countryKeys = ['isCountrySupported', 'is_country_supported'];
+    const ageKeys = ['isAgeSupported', 'is_age_supported'];
+    const regionStates = new Set(['REGION_UNAVAILABLE', 'COUNTRY_UNSUPPORTED', 'UNAVAILABLE_IN_REGION', 'UNAVAILABLE_IN_COUNTRY']);
+    const visit = (value, callback) => {
+      if (!value || typeof value !== 'object') return;
+      if (Object.hasOwn(value, 'error') && value.error != null) return;
+      callback(value);
+      for (const child of Object.values(value)) visit(child, callback);
+    };
+
+    // A country flag must never override an explicit age restriction.
+    let ageRestricted = false;
+    visit(data, value => {
+      if (ageKeys.some(key => Object.hasOwn(value, key) && value[key] !== true) ||
+          (typeof value.availabilityState === 'string' && /AGE|UNDERAGE|MINOR/.test(value.availabilityState))) {
+        ageRestricted = true;
+      }
+    });
+    if (ageRestricted) return { body: rawBody };
+
+    let changed = false;
+    visit(data, value => {
+      const countryBlocked = countryKeys.some(key => value[key] === false);
+      for (const key of countryKeys) {
+        if (value[key] === false) {
+          value[key] = true;
+          changed = true;
+        }
+      }
+      if (regionStates.has(value.availabilityState) ||
+          (countryBlocked && value.availabilityState === 'UNAVAILABLE')) {
+        value.availabilityState = 'AVAILABLE';
+        changed = true;
+      }
+    });
+    return { body: changed ? JSON.stringify(data) : rawBody };
+  }
+
+  function targetKind(url, base) {
+    try {
+      const parsed = new URL(url, base);
+      if (parsed.origin !== new URL(base).origin) return null;
+      if (parsed.pathname.endsWith('/_/AiSandboxAngularFrontend/data/batchexecute') &&
+          parsed.searchParams.get('rpcids')?.split(',').includes('cPZSdc')) return 'batch';
+      // Match endpoint names, not query parameters or unrelated general.* RPCs.
+      if (/\/(?:fetchToolAvailability|checkAppAvailability)\/?$/.test(parsed.pathname)) return 'availability';
+      const trpc = parsed.pathname.match(/\/trpc\/([^/]+)$/);
+      if (trpc && trpc[1].split(',').every(name =>
+        ['general.fetchToolAvailability', 'general.checkAppAvailability'].includes(name))) return 'availability';
+    } catch {}
+    return null;
+  }
+
+  function patchResponse(rawBody, kind) {
+    return kind === 'batch' ? patchBatchExecute(rawBody) : patchAvailability(rawBody);
+  }
+
   // Node module export for testing
   if (typeof module === 'object' && module.exports) {
-    module.exports = { patch: patchBatchExecute };
+    module.exports = { patch: patchBatchExecute, patchAvailability, targetKind };
     return;
   }
 
@@ -68,19 +127,16 @@
     else document.addEventListener('DOMContentLoaded', setAttr, { once: true });
   }
 
-  function isTargetUrl(url) {
-    try {
-      const parsed = new URL(url, location.href);
-      const rpcids = parsed.searchParams.get('rpcids');
-      const hasRpc = rpcids ? rpcids.split(',').includes('cPZSdc') : false;
-      return (
-        parsed.origin === location.origin &&
-        parsed.pathname.endsWith('/_/AiSandboxAngularFrontend/data/batchexecute') &&
-        hasRpc
-      );
-    } catch {
-      return false;
+  function recordPatch(patched, raw, kind) {
+    if (kind === 'batch' || patched.body !== raw) {
+      diag.applied++;
+      setDiagnostic('applied', patched.before);
     }
+  }
+
+  function recordMismatch() {
+    // An unrelated availability response must not erase a successful unlock.
+    if (!diag.applied) setDiagnostic('schema mismatch — unchanged');
   }
 
   // Intercept XMLHttpRequest
@@ -90,7 +146,7 @@
   const origOpen = proto.open;
 
   proto.open = function(method, url, ...args) {
-    isFlowTarget.set(this, isTargetUrl(url));
+    isFlowTarget.set(this, targetKind(url, location.href));
     patchedMap.delete(this);
     return Reflect.apply(origOpen, this, [method, url, ...args]);
   };
@@ -103,10 +159,12 @@
       ...descriptor,
       get() {
         const raw = Reflect.apply(descriptor.get, this, []);
-        if (!isFlowTarget.get(this) || typeof raw !== 'string') {
+        const kind = isFlowTarget.get(this);
+        const jsonResponse = prop === 'response' && this.responseType === 'json';
+        if (!kind || (typeof raw !== 'string' && !jsonResponse)) {
           return raw;
         }
-        if (this.readyState === 3) {
+        if (this.readyState === 3 && typeof raw === 'string') {
           diag.heldPartial = true;
           return '';
         }
@@ -115,13 +173,17 @@
         }
         if (!patchedMap.has(this)) {
           try {
-            const patched = patchBatchExecute(raw);
-            patchedMap.set(this, patched.body);
-            diag.applied++;
-            setDiagnostic('applied', patched.before);
+            if (this.status < 200 || this.status >= 300) {
+              patchedMap.set(this, raw);
+              return raw;
+            }
+            const text = jsonResponse ? JSON.stringify(raw) : raw;
+            const patched = patchResponse(text, kind);
+            patchedMap.set(this, patched.body === text ? raw : jsonResponse ? JSON.parse(patched.body) : patched.body);
+            recordPatch(patched, text, kind);
           } catch {
             patchedMap.set(this, raw);
-            setDiagnostic('schema mismatch — unchanged');
+            recordMismatch();
           }
         }
         return patchedMap.get(this);
@@ -133,25 +195,35 @@
   const origFetch = window.fetch;
   if (typeof origFetch === 'function') {
     window.fetch = async function(resource, init) {
-      const url = resource instanceof Request ? resource.url : String(resource);
-      if (!isTargetUrl(url)) {
+      const url = typeof Request === 'function' && resource instanceof Request ? resource.url : String(resource);
+      const kind = targetKind(url, location.href);
+      if (!kind) {
         return origFetch.apply(this, arguments);
       }
+      // Send the request once; parsing failures return its untouched response.
+      const response = await origFetch.apply(this, arguments);
+      if (!response.ok) return response;
       try {
-        const response = await origFetch.apply(this, arguments);
         const clone = response.clone();
         const text = await clone.text();
-        const patched = patchBatchExecute(text);
-        diag.applied++;
-        setDiagnostic('applied', patched.before);
-        return new Response(patched.body, {
+        const patched = patchResponse(text, kind);
+        if (patched.body === text) {
+          recordPatch(patched, text, kind);
+          return response;
+        }
+        const headers = new Headers(response.headers);
+        headers.delete('content-length');
+        headers.delete('content-encoding');
+        const result = new Response(patched.body, {
           status: response.status,
           statusText: response.statusText,
-          headers: response.headers
+          headers
         });
+        recordPatch(patched, text, kind);
+        return result;
       } catch {
-        setDiagnostic('schema mismatch — unchanged');
-        return origFetch.apply(this, arguments);
+        recordMismatch();
+        return response;
       }
     };
   }
