@@ -43,7 +43,7 @@
       flowCaption: 'Создание видео',
       playgroundCaption: 'Создание игр',
       flowHint: 'Откройте Flow и войдите в аккаунт Google.',
-      playgroundHint: 'Откроем каталог игр. Доступ к созданию игр зависит от Google.',
+      playgroundHint: 'Для доступа может понадобиться DNS с обходом геоблокировок. Создание игр зависит от Google.',
       openDisabled: 'Включить и открыть Flow',
       checking: 'Проверка…',
       enabledOn: 'Включено. Откройте Flow, чтобы начать.',
@@ -60,7 +60,12 @@
       playgroundReady: 'Каталог Playground открыт.',
       playgroundSetup: 'Завершите настройку профиля или вход в окне Google. Затем продолжим автоматически.',
       playgroundEntering: 'Открываем каталог Playground…',
-      playgroundEntryFailed: 'Каталог не открылся. Нажмите «Повторить вход».',
+      playgroundEntryFailed: 'Не удалось открыть Playground автоматически. Попробуйте DNS с обходом геоблокировок.',
+      dnsHelpTitle: 'Как настроить DNS',
+      dnsHelpNote: 'Могут подойти разные DNS-сервисы с поддержкой Playground. Пользователь подтвердил работу с GeoHide; это один из вариантов, без гарантии для всех подключений.',
+      dnsHelpSteps: 'В настройках браузера найдите «Безопасный DNS» или «DNS через HTTPS». Выберите пользовательский провайдер и укажите его адрес. Пример GeoHide:',
+      dnsHelpRetry: 'Сохраните настройку и нажмите «Повторить вход». При необходимости перезапустите браузер. Расширение само DNS не меняет.',
+      dnsHelpLink: 'Открыть сайт GeoHide',
       reload: 'Повторить вход',
       pinTab: 'Закрепить вкладку',
       unpinTab: 'Открепить вкладку',
@@ -108,7 +113,7 @@
       flowCaption: 'Create videos',
       playgroundCaption: 'Create games',
       flowHint: 'Open Flow and sign in to your Google account.',
-      playgroundHint: 'We’ll open the game catalog. Google determines access to game creation.',
+      playgroundHint: 'Access may require a DNS service that supports bypassing regional restrictions. Google controls game creation.',
       openDisabled: 'Enable and open Flow',
       checking: 'Checking…',
       enabledOn: 'Enabled. Open Flow to get started.',
@@ -125,7 +130,12 @@
       playgroundReady: 'Playground catalog opened.',
       playgroundSetup: 'Complete your profile setup or sign-in in the Google window. We’ll then continue automatically.',
       playgroundEntering: 'Opening the Playground catalog…',
-      playgroundEntryFailed: 'The catalog did not open. Click “Retry access”.',
+      playgroundEntryFailed: 'Could not open Playground automatically. Try a DNS service that supports bypassing regional restrictions.',
+      dnsHelpTitle: 'How to set up DNS',
+      dnsHelpNote: 'Different DNS services may work if they support Playground. A user confirmed success with GeoHide; it is one option, with no guarantee for every connection.',
+      dnsHelpSteps: 'Find Secure DNS or DNS over HTTPS in your browser settings. Choose a custom provider and enter its address. GeoHide example:',
+      dnsHelpRetry: 'Save the setting and click Retry access. Restart the browser if needed. The extension does not change DNS for you.',
+      dnsHelpLink: 'Open the GeoHide website',
       reload: 'Retry access',
       pinTab: 'Pin tab',
       unpinTab: 'Unpin tab',
@@ -192,6 +202,7 @@
   const statusDot = document.getElementById('status-dot');
   const errorEl = document.getElementById('error');
   const reloadBtn = document.getElementById('reload');
+  const dnsHelp = document.getElementById('dns-help');
   const openBtn = document.getElementById('open');
   const flowChoice = document.getElementById('service-flow');
   const playgroundChoice = document.getElementById('service-playground');
@@ -271,6 +282,13 @@
 
   function closeModal() {
     modalOverlay.hidden = true;
+  }
+
+  function showDnsHelp() {
+    statusEl.textContent = t('playgroundEntryFailed');
+    setStatusDot('error');
+    dnsHelp.hidden = false;
+    document.getElementById('service-hint').hidden = true;
   }
 
   function openModal({ type, title, bodyHtml, actions = [] }) {
@@ -382,6 +400,10 @@
     openBtn.textContent = t(toggle.checked ? 'open' : 'openDisabled');
     document.getElementById('toggle-hint').textContent = t('toggleHint');
     document.getElementById('service-hint').textContent = t(selectedService === 'playground' ? 'playgroundHint' : 'flowHint');
+    for (const [id, key] of [['dns-help-title', 'dnsHelpTitle'], ['dns-help-note', 'dnsHelpNote'],
+      ['dns-help-steps', 'dnsHelpSteps'], ['dns-help-retry', 'dnsHelpRetry'], ['dns-help-link', 'dnsHelpLink']]) {
+      document.getElementById(id).textContent = t(key);
+    }
     document.getElementById('flow-caption').textContent = t('flowCaption');
     document.getElementById('playground-caption').textContent = t('playgroundCaption');
     document.getElementById('service-picker').setAttribute('aria-label', t('serviceLabel'));
@@ -434,6 +456,8 @@
 
   async function refreshStatus() {
     const request = ++statusRequest;
+    dnsHelp.hidden = true;
+    document.getElementById('service-hint').hidden = false;
     const scripts = await chrome.scripting.getRegisteredContentScripts({ ids: [HELPER_ID] });
     if (request !== statusRequest) return;
     toggle.checked = scripts.length > 0;
@@ -480,15 +504,15 @@
           setStatusDot('loading');
           reloadBtn.hidden = true;
         } else if (res?.state === 'playground-entry-failed') {
-          statusEl.textContent = t('playgroundEntryFailed');
-          setStatusDot('error');
+          if (selectedService === 'playground') showDnsHelp();
+          else { statusEl.textContent = t('reopen'); setStatusDot('error'); }
         } else if (res?.applied) {
           statusEl.textContent = t('applied');
           setStatusDot('active');
           void celebrateUnlock();
         } else if (res?.isBlockedPage) {
-          statusEl.textContent = t('blockedPage');
-          setStatusDot('error');
+          if (selectedService === 'playground') showDnsHelp();
+          else { statusEl.textContent = t('blockedPage'); setStatusDot('error'); }
         } else if (res?.state === 'armed') {
           statusEl.textContent = t('armed');
           setStatusDot('loading');
@@ -501,8 +525,8 @@
         }
       } catch {
         if (request !== statusRequest) return;
-        statusEl.textContent = t('reopen');
-        setStatusDot('loading');
+        if (selectedService === 'playground' && new URL(tab.url).pathname === '/region-unavailable') showDnsHelp();
+        else { statusEl.textContent = t('reopen'); setStatusDot('loading'); }
       }
     }
   }

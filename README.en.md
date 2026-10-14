@@ -6,7 +6,7 @@ A Tampermonkey script is also available with the same access logic for both serv
 
 The popup lets you choose a service, enable access help, open or pin a tab, and check for updates. On your first Playground visit, the extension waits for you to complete Google's game profile setup, then continues to the catalog.
 
-Playground catalog access has been verified. Game creation and account limits depend on Google and have not been tested separately.
+Playground catalog access has been verified. Game creation and account limits depend on Google and have not been tested separately. Some connections also require a DNS service that supports bypassing regional restrictions; the extension alone may not be enough.
 
 [Download the extension and updates](https://github.com/Kam300/Unlock-Flow/releases) · [<img src="docs/icons/telegram.svg" width="18" height="18" alt="Telegram"> Author's Telegram channel](https://t.me/TotalC0de) · [Русский](README.md)
 
@@ -85,3 +85,20 @@ On first use of Playground, complete Google's game profile setup yourself.
 The helper waits for the dialog to close, then continues to the catalog.
 Playground catalog access has been verified; game creation and account limits
 have not been tested separately and remain subject to Google's availability.
+
+## Playground will not open — try another DNS service
+
+Automatic entry does not work on every connection. If Playground stays on
+`/region-unavailable`, the extension could not open it on its own.
+Try a DNS service that supports bypassing regional restrictions for Playground.
+Different such services may work, depending on the provider and your network.
+Changing to an ordinary DNS provider does not guarantee a different region.
+
+A user confirmed success with [GeoHide](https://geohide.ru/).
+DNS-over-HTTPS address: `https://geohide.ru/dns-query`.
+This is one option, not a required provider or a guarantee of access.
+
+Find Secure DNS or DNS over HTTPS in your browser settings, choose a custom
+provider and enter its address. Save the setting, then click Retry access in
+the extension or reload the tab if you use Tampermonkey. Restart the browser
+if needed. Neither the extension nor the userscript changes DNS for you.

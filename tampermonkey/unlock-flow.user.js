@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Unlock Flow — Flow & Playground
 // @namespace    https://github.com/Kam300/Unlock-Flow
-// @version      1.4.7
+// @version      1.4.8
 // @description  Help with regional access to Google Flow and the Playground game catalog.
 // @description:ru Помощь со входом в Google Flow и каталог Playground при региональных ограничениях.
 // @author       TotalCodeAdmin

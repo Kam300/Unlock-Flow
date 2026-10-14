@@ -512,6 +512,13 @@ h1 { font-size: 26px; letter-spacing: -.03em; margin-top: 16px; }
 section { margin: 0; }
 .toggle-hint { margin: 0 16px 7px; font-size: 11px; color: var(--label-2); }
 .service-hint { margin: 12px 0; font-size: 12px; line-height: 1.4; color: var(--label-2); }
+.dns-help { margin: 0 0 12px; padding: 12px; border: 1px solid var(--blue); border-radius: 12px; background: var(--tint-bg); font-size: 12px; line-height: 1.45; }
+.dns-help[hidden] { display: none; }
+.dns-help summary { color: var(--blue); font-weight: 600; cursor: pointer; }
+.dns-help p { margin: 10px 0; }
+.dns-help a { color: var(--blue); }
+.dns-address { display: block; padding: 8px; border-radius: 6px; background: var(--cell); overflow-wrap: anywhere; user-select: all; }
+.dns-help summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 .tabs { grid-template-columns: 1fr; gap: 8px; }
 .tabs button { white-space: normal; padding: 10px; font-size: 14px; min-height: 42px; }
 .tabs #reload { font-size: 13px; min-height: 36px; padding: 7px; }

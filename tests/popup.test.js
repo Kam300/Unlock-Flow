@@ -131,3 +131,40 @@ test('Firefox compares its platform version rather than a newer Chrome-only vers
   await settle(); await ui.get('check-update').onclick();
   assert.equal(ui.get('modal-title').textContent, 'У вас последняя версия');
 });
+
+test('Playground failure offers DNS instructions instead of an endless retry message', async () => {
+  const ui = setup({ active: 2, statuses: { 2: { state: 'playground-entry-failed', applied: false } } });
+  await settle();
+  assert.equal(ui.get('dns-help').hidden, false);
+  assert.match(ui.get('status').textContent, /Не удалось открыть Playground автоматически.*DNS/);
+  assert.equal(ui.get('service-hint').hidden, true);
+  assert.match(ui.get('dns-help-note').textContent, /разные DNS.*GeoHide/);
+  assert.match(ui.get('dns-help-retry').textContent, /само DNS не меняет/);
+  ui.get('lang-en').onclick(); await settle();
+  assert.match(ui.get('status').textContent, /Could not open Playground automatically.*DNS/);
+  assert.equal(ui.get('dns-help-title').textContent, 'How to set up DNS');
+});
+
+test('DNS help is hidden when switching from a failed Playground to Flow or disabling help', async () => {
+  const ui = setup({ active: 2, statuses: { 2: { state: 'playground-entry-failed', applied: false } } });
+  await settle();
+  ui.get('service-flow').onclick(); await settle();
+  assert.equal(ui.get('dns-help').hidden, true);
+  assert.equal(ui.get('service-hint').hidden, false);
+  ui.get('service-playground').onclick(); await settle();
+  assert.equal(ui.get('dns-help').hidden, false);
+  ui.get('enabled').checked = false;
+  await ui.get('enabled').listeners.change();
+  assert.equal(ui.get('dns-help').hidden, true);
+});
+
+test('Playground blocked page shows DNS guidance but successful entry and profile setup do not', async () => {
+  for (const status of [
+    { state: 'not-loaded', isBlockedPage: true },
+    { state: 'playground-setup', isBlockedPage: true },
+    { state: 'playground-ready', applied: true }
+  ]) {
+    const ui = setup({ active: 2, statuses: { 2: status } }); await settle();
+    assert.equal(ui.get('dns-help').hidden, status.state !== 'not-loaded');
+  }
+});
