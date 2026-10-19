@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-function setup({ enabled = true, active = 1, statuses = {}, firefox = false, fetchFails = false, remote = { version: '1.4.6', firefoxVersion: '1.4.6' } } = {}) {
+function setup({ enabled = true, active = 1, statuses = {}, firefox = false, fetchFails = false, version = '1.4.5', pending, remote = { version: '1.4.6', firefoxVersion: '1.4.6' } } = {}) {
   const elements = new Map();
   function element() {
     const classes = new Set();
@@ -23,13 +23,15 @@ function setup({ enabled = true, active = 1, statuses = {}, firefox = false, fet
     { id: 1, url: 'https://flow.google.com/', pinned: false, active: active === 1 },
     { id: 2, url: 'https://playground.google/explore', pinned: true, active: active === 2 },
   ];
-  const actions = [];
+  const actions = [], timers = new Map(), windowEvents = {};
+  let timerId = 0;
+  const storage = pending === undefined ? {} : { uf_pending_update: pending };
   const chrome = {
-    runtime: { getURL: () => firefox ? 'moz-extension://test/' : 'chrome-extension://test/', getManifest: () => ({ version: '1.4.5' }), async sendMessage(message) {
+    runtime: { getURL: () => firefox ? 'moz-extension://test/' : 'chrome-extension://test/', getManifest: () => ({ version }), async sendMessage(message) {
       actions.push(message); enabled = message.enabled; return { ok: true };
     } },
     scripting: { async getRegisteredContentScripts() { return enabled ? [{ id: 'flow-helper' }] : []; } },
-    storage: { local: { async get() { return {}; }, async set(data) { actions.push({ storage: data }); } } },
+    storage: { local: { async get() { return { ...storage }; }, async set(data) { Object.assign(storage, data); actions.push({ storage: data }); }, async remove(key) { delete storage[key]; actions.push({ removed: key }); } } },
     tabs: {
       async query(options) { return options.active ? tabs.filter(t => t.active) : tabs; },
       async get(id) { return tabs.find(t => t.id === id); },
@@ -39,14 +41,58 @@ function setup({ enabled = true, active = 1, statuses = {}, firefox = false, fet
       async reload(id) { actions.push({ reload: id }); },
     },
   };
-  const context = { document, chrome, window: { matchMedia: () => ({ matches: false }), close() {} },
+  const context = { document, chrome, window: { matchMedia: () => ({ matches: false }), close() {}, addEventListener(k, fn) { windowEvents[k] = fn; } },
     localStorage: { getItem() { return null; }, setItem() {} }, URL, AbortController,
     async fetch() { if (fetchFails) throw new Error('Offline'); return { ok: true, async json() { return remote; } }; },
-    setTimeout() {}, clearTimeout() {} };
+    setTimeout(fn, delay) { timers.set(++timerId, { fn, delay }); return timerId; }, clearTimeout(id) { timers.delete(id); } };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'popup.js'), 'utf8'), context);
-  return { get: id => document.getElementById(id), actions, tabs };
+  return { get: id => document.getElementById(id), actions, tabs, timers, storage,
+    async poll() { const [id, timer] = [...timers].find(([, timer]) => timer.delay === 1500); timers.delete(id); await timer.fn(); },
+    close() { windowEvents.pagehide(); } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test('manual installation clears reminders for the installed version or older', async () => {
+  for (const target of ['1.4.8', '1.4.7', '1.4.8.0']) {
+    const ui = setup({ version: '1.4.8', pending: `https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v${target}.zip`, remote: { version: '1.4.8' } });
+    await settle();
+    assert.equal(ui.storage.uf_pending_update, undefined);
+    assert.equal(ui.get('modal-title').textContent, '');
+    await ui.get('check-update').onclick();
+    assert.equal(ui.get('modal-title').textContent, 'У вас последняя версия');
+    assert.equal(ui.get('modal-actions').children.some(item => /перезапустить|Скачать/.test(item.textContent)), false);
+  }
+});
+
+test('a genuinely newer downloaded update still offers installation steps', async () => {
+  const pending = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.10.zip';
+  const ui = setup({ version: '1.4.8', pending }); await settle();
+  assert.equal(ui.storage.uf_pending_update, pending);
+  assert.match(ui.get('modal-body').innerHTML, /Распакуйте ZIP/);
+  await ui.get('modal-actions').children[1].onclick();
+  assert.equal(ui.actions.at(-1).url.startsWith(`${pending}?t=`), true);
+});
+
+test('legacy and malformed update reminders cannot trap the update check', async () => {
+  for (const pending of [true, {}, 'https://example.com/update.zip']) {
+    const ui = setup({ version: '1.4.8', pending, remote: { version: '1.4.8' } }); await settle();
+    assert.equal(ui.storage.uf_pending_update, undefined);
+    await ui.get('check-update').onclick();
+    assert.equal(ui.get('modal-title').textContent, 'У вас последняя версия');
+  }
+});
+
+test('an open popup updates from entry to catalog ready and stops polling on close', async () => {
+  const statuses = { 2: { state: 'playground-entry', applied: false } };
+  const ui = setup({ active: 2, statuses }); await settle();
+  assert.match(ui.get('status').textContent, /Открываем каталог/);
+  statuses[2] = { state: 'playground-ready', applied: true };
+  await ui.poll();
+  assert.equal(ui.get('status').textContent, 'Каталог Playground открыт.');
+  assert.equal(ui.get('dns-help').hidden, true);
+  ui.close();
+  assert.equal([...ui.timers.values()].some(timer => timer.delay === 1500), false);
+});
 
 test('active Playground selects its service and switching to Flow uses the Flow tab', async () => {
   const ui = setup({ active: 2 }); await settle();

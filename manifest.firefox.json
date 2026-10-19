@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Unlock flow",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "Unlock Flow interface for Google Flow and Playground.",
   "author": "TotalCodeAdmin (https://t.me/TotalCodeAdmin)",
   "permissions": [
@@ -42,6 +42,7 @@
         "https://playground.google/*"
       ],
       "js": [
+        "playground-state.js",
         "status.js"
       ],
       "run_at": "document_idle"

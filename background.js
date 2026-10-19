@@ -1,7 +1,7 @@
 const registration = {
   id: 'flow-helper',
   matches: ['https://flow.google.com/*', 'https://playground.google/*'],
-  js: ['hook.js', 'playground.js'],
+  js: ['hook.js', 'playground-state.js', 'playground.js'],
   runAt: 'document_start',
   world: 'MAIN',
   persistAcrossSessions: true

@@ -14,6 +14,7 @@ const STAGE_DIR = path.join(PROJECT_DIR, '_ff_stage');
 const files = [
   'background.js',
   'hook.js',
+  'playground-state.js',
   'playground.js',
   'status.js',
   'popup.html',

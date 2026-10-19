@@ -23,7 +23,6 @@
     }
     return;
   }
-  if (location.pathname !== '/404') return;
   let attempts = 0;
   let ready = false;
   let finished = false;
@@ -49,8 +48,7 @@
     readyTimer = setTimeout(() => { ready = true; checkPage(); }, 1000);
   }
   function hasSetupDialog() {
-    return Array.from(document.querySelectorAll('dialog[open], [role="dialog"], iframe[src*="games.google"], iframe[src*="play.google"]'))
-      .some(element => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+    return window.__ufReadPlaygroundState() === 'playground-setup';
   }
   function expire() {
     if (hasSetupDialog()) {
@@ -78,10 +76,7 @@
       timer = setTimeout(expire, 30000);
     }
     publish();
-    if (location.pathname === '/explore' && Array.from(document.querySelectorAll('a[href]')).some(link => {
-      const url = new URL(link.href, location.href);
-      return url.origin === location.origin && url.pathname.startsWith('/game/');
-    })) {
+    if (window.__ufReadPlaygroundState() === 'playground-ready') {
       finish('playground-ready');
       try { sessionStorage.removeItem(retryKey); } catch {}
       return;

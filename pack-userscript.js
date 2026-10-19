@@ -7,7 +7,7 @@ const DOWNLOAD_URL = 'https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/
 
 function buildUserscript() {
   const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
-  const sources = ['hook.js', 'playground.js'].map(file =>
+  const sources = ['hook.js', 'playground-state.js', 'playground.js'].map(file =>
     `// Shared source: ${file}\n${fs.readFileSync(path.join(ROOT, file), 'utf8').replace(/\r\n/g, '\n').trim()}\n`
   );
   const header = [

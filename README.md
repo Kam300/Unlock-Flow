@@ -20,7 +20,7 @@ Flow в светлой теме и Playground в тёмной. Статусы н
 
 ## Какой файл скачать
 
-- Chrome: `Unlock-Flow-v<версия>.zip`, например `Unlock-Flow-v1.4.8.zip`.
+- Chrome: `Unlock-Flow-v<версия>.zip`, например `Unlock-Flow-v1.4.9.zip`.
 - Firefox: `Unlock-Flow-Firefox-v<версия>.zip`.
 - Tampermonkey: `Unlock-Flow-Tampermonkey-v<версия>.user.js` — один скрипт для Flow и Playground.
 - Архивы Source code на странице релиза — исходники проекта. Для установки

@@ -1,11 +1,11 @@
 {
-  "version": "1.4.8",
-  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.8.zip",
-  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.8.crx",
-  "crxVersion": "1.4.8",
+  "version": "1.4.9",
+  "downloadUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.9.zip",
+  "crxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.9.crx",
+  "crxVersion": "1.4.9",
   "updateUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/updates.xml",
-  "changelog": "Версия 1.4.8: При неудачном входе в Playground показана подсказка о DNS с обходом геоблокировок и инструкция настройки с примером GeoHide. В README добавлено примечание о разных DNS-сервисах. Расширение само DNS не меняет.",
-  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.8.zip",
-  "firefoxVersion": "1.4.8",
-  "firefoxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-Firefox-v1.4.8.zip"
+  "changelog": "Версия 1.4.9: После ручного обновления больше не появляется устаревшее напоминание о скачивании и перезапуске. Исправлено определение открытого каталога Playground; статус в окне расширения обновляется автоматически.",
+  "zipUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-v1.4.9.zip",
+  "firefoxVersion": "1.4.9",
+  "firefoxUrl": "https://raw.githubusercontent.com/Kam300/Unlock-Flow/main/dist/Unlock-Flow-Firefox-v1.4.9.zip"
 }

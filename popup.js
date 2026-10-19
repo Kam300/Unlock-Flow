@@ -454,10 +454,12 @@
     void refreshStatus();
   }
 
-  async function refreshStatus() {
+  async function refreshStatus(quiet = false) {
     const request = ++statusRequest;
-    dnsHelp.hidden = true;
-    document.getElementById('service-hint').hidden = false;
+    if (!quiet) {
+      dnsHelp.hidden = true;
+      document.getElementById('service-hint').hidden = false;
+    }
     const scripts = await chrome.scripting.getRegisteredContentScripts({ ids: [HELPER_ID] });
     if (request !== statusRequest) return;
     toggle.checked = scripts.length > 0;
@@ -480,18 +482,24 @@
     updatePinButtonText();
 
     if (!toggle.checked) {
+      dnsHelp.hidden = true;
+      document.getElementById('service-hint').hidden = false;
       statusEl.textContent = t('enabledOff');
       setStatusDot('');
       return;
     }
 
-    statusEl.textContent = t('enabledOn');
-    setStatusDot(isFlowTab ? 'loading' : 'active');
+    if (!quiet || !isFlowTab) {
+      statusEl.textContent = t('enabledOn');
+      setStatusDot(isFlowTab ? 'loading' : 'active');
+    }
 
     if (isFlowTab && toggle.checked) {
       try {
         const res = await chrome.tabs.sendMessage(tab.id, { type: 'status' });
         if (request !== statusRequest) return;
+        dnsHelp.hidden = true;
+        document.getElementById('service-hint').hidden = false;
         if (res?.state === 'playground-ready') {
           statusEl.textContent = t('playgroundReady');
           setStatusDot('active');
@@ -597,10 +605,16 @@
   async function hasPendingUpdate() {
     if (isFirefox) return false;
     const pending = (await chrome.storage.local.get(PENDING_UPDATE_KEY))[PENDING_UPDATE_KEY];
-    if (typeof pending === 'string' && /^https:\/\/raw\.githubusercontent\.com\/Kam300\/Unlock-Flow\/main\/dist\/Unlock-Flow-v\d+\.\d+\.\d+(?:\.\d+)?\.zip$/.test(pending)) {
-      updateZipUrl = pending;
+    if (!pending) return false;
+    const match = typeof pending === 'string' && pending.match(/^https:\/\/raw\.githubusercontent\.com\/Kam300\/Unlock-Flow\/main\/dist\/Unlock-Flow-v(\d+\.\d+\.\d+(?:\.\d+)?)\.zip$/);
+    // Replacing files and reloading manually also completes an update.
+    // Discard legacy/invalid reminders and targets already installed.
+    if (!match || compareVersions(match[1], chrome.runtime.getManifest().version) <= 0) {
+      await chrome.storage.local.remove(PENDING_UPDATE_KEY);
+      return false;
     }
-    return Boolean(pending);
+    updateZipUrl = pending;
+    return true;
   }
 
   async function handleCheckUpdate() {
@@ -662,7 +676,6 @@
           bodyHtml: `<p>${t('modalUpToDate', currentVersion)}</p>`,
           actions: [
             { label: t('modalCloseBtn'), isPrimary: true, onClick: closeModal },
-            restartUpdateAction(),
             {
               row: [
                 { label: t('modalGithubBtn'), isPrimary: false, href: GITHUB_REPO, icon: 'github' },
@@ -831,7 +844,22 @@
   langRuBtn.onclick = () => setLang('ru');
   langEnBtn.onclick = () => setLang('en');
 
-  init().catch((e) => {
+  let statusTimer;
+  let popupClosed = false;
+  function scheduleStatusRefresh() {
+    if (popupClosed) return;
+    statusTimer = setTimeout(async () => {
+      try { await refreshStatus(true); } catch {}
+      scheduleStatusRefresh();
+    }, 1500);
+  }
+  window.addEventListener?.('pagehide', () => {
+    popupClosed = true;
+    clearTimeout(statusTimer);
+    statusRequest++;
+  }, { once: true });
+
+  init().then(scheduleStatusRefresh).catch((e) => {
     errorEl.textContent = e?.message || String(e);
     setStatusDot('error');
   });

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Unlock Flow — Flow & Playground
 // @namespace    https://github.com/Kam300/Unlock-Flow
-// @version      1.4.8
+// @version      1.4.9
 // @description  Help with regional access to Google Flow and the Playground game catalog.
 // @description:ru Помощь со входом в Google Flow и каталог Playground при региональных ограничениях.
 // @author       TotalCodeAdmin
@@ -257,6 +257,32 @@ if (window.top !== window.self) return;
   setDiagnostic('armed');
 })();
 
+// Shared source: playground-state.js
+(() => {
+  'use strict';
+  // Read the current DOM, including navigation performed without a page reload.
+  window.__ufReadPlaygroundState = () => {
+    if (location.origin !== 'https://playground.google') return null;
+    if (location.pathname === '/region-unavailable') return 'playground-entry-failed';
+    const visible = element => element.getClientRects().length > 0 &&
+      getComputedStyle(element).visibility !== 'hidden' && !element.closest('[hidden], [aria-hidden="true"]');
+    if (Array.from(document.querySelectorAll('dialog[open], [role="dialog"], iframe[src*="games.google"], iframe[src*="play.google"]')).some(visible)) {
+      return 'playground-setup';
+    }
+    if (location.pathname !== '/explore') return null;
+    const games = Array.from(document.querySelectorAll('a[href]')).some(link => {
+      try {
+        const url = new URL(link.href, location.href);
+        return url.origin === location.origin && url.pathname.startsWith('/game/') && visible(link);
+      } catch { return false; }
+    });
+    const search = Array.from(document.querySelectorAll('input[type="search"], [role="searchbox"], [role="search"] input, input[placeholder], input[aria-label]'))
+      .some(element => visible(element) && (element.type === 'search' || element.getAttribute('role') === 'searchbox' ||
+        element.closest('[role="search"]') || /search games|поиск игр/i.test(`${element.getAttribute('placeholder') || ''} ${element.getAttribute('aria-label') || ''}`)));
+    return games || search ? 'playground-ready' : null;
+  };
+})();
+
 // Shared source: playground.js
 (() => {
   'use strict';
@@ -283,7 +309,6 @@ if (window.top !== window.self) return;
     }
     return;
   }
-  if (location.pathname !== '/404') return;
   let attempts = 0;
   let ready = false;
   let finished = false;
@@ -309,8 +334,7 @@ if (window.top !== window.self) return;
     readyTimer = setTimeout(() => { ready = true; checkPage(); }, 1000);
   }
   function hasSetupDialog() {
-    return Array.from(document.querySelectorAll('dialog[open], [role="dialog"], iframe[src*="games.google"], iframe[src*="play.google"]'))
-      .some(element => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+    return window.__ufReadPlaygroundState() === 'playground-setup';
   }
   function expire() {
     if (hasSetupDialog()) {
@@ -338,10 +362,7 @@ if (window.top !== window.self) return;
       timer = setTimeout(expire, 30000);
     }
     publish();
-    if (location.pathname === '/explore' && Array.from(document.querySelectorAll('a[href]')).some(link => {
-      const url = new URL(link.href, location.href);
-      return url.origin === location.origin && url.pathname.startsWith('/game/');
-    })) {
+    if (window.__ufReadPlaygroundState() === 'playground-ready') {
       finish('playground-ready');
       try { sessionStorage.removeItem(retryKey); } catch {}
       return;

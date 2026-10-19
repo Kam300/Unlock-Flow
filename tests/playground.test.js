@@ -3,11 +3,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const source = fs.readFileSync(path.join(__dirname, '..', 'playground.js'), 'utf8');
+const source = ['playground-state.js', 'playground.js'].map(file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8')).join('\n');
 
 function run(page, lastAttempt = null, origin = 'https://playground.google', script = source) {
   const attrs = new Map(), storage = new Map(), timers = new Map(), events = new Map();
-  let now = Date.now(), timerId = 0, dialog = false;
+  let now = Date.now(), timerId = 0, dialog = false, search = false, hidden = false;
+  const visibleElement = () => ({ getClientRects: () => hidden ? [] : [{}], closest: () => null, getAttribute: () => null });
   if (lastAttempt) storage.set('uf_playground_entry_attempt', String(lastAttempt));
   const location = { origin, pathname: page, href: origin + page, replace(url) { this.redirect = url; } };
   let callback, links = [], clicks = 0, logoClicks = 0, disconnected = false, guarded = false;
@@ -23,7 +24,11 @@ function run(page, lastAttempt = null, origin = 'https://playground.google', scr
     Date: class extends Date { static now() { return now; } },
     getComputedStyle: () => ({ visibility: 'visible' }),
     document: { readyState: 'complete', documentElement: { setAttribute(k, v) { attrs.set(k, v); } },
-      querySelectorAll(selector) { return selector === 'a[href]' ? links : dialog ? [{ getClientRects: () => [{}] }] : []; } },
+      querySelectorAll(selector) {
+        if (selector === 'a[href]') return links;
+        if (selector.startsWith('dialog')) return dialog ? [visibleElement()] : [];
+        return search ? [{ ...visibleElement(), type: 'search' }] : [];
+      } },
     sessionStorage: { getItem(k) { return storage.get(k); }, setItem(k, v) { storage.set(k, v); }, removeItem(k) { storage.delete(k); } },
     MutationObserver: class { constructor(fn) { callback = fn; } observe() {} disconnect() { disconnected = true; } },
     setTimeout(fn, delay) { timers.set(++timerId, { fn, due: now + delay }); return timerId; },
@@ -43,7 +48,8 @@ function run(page, lastAttempt = null, origin = 'https://playground.google', scr
       }
       now = end;
     },
-    enterCatalog() { location.pathname = '/explore'; links = [{ href: origin + '/game/123' }]; callback(); },
+    enterCatalog() { location.pathname = '/explore'; links = [{ ...visibleElement(), href: origin + '/game/123' }]; callback(); },
+    showSearch(isHidden = false) { search = true; hidden = isHidden; callback(); },
     get clicks() { return clicks; }, get logoClicks() { return logoClicks; }, get guarded() { return guarded; },
     get disconnected() { return disconnected; } };
 }
@@ -105,6 +111,27 @@ test('Flow pages are untouched by the Playground helper', () => {
   const app = run('/404', null, 'https://flow.google.com');
   assert.equal(app.attrs.size, 0);
   assert.equal(app.location.redirect, undefined);
+});
+
+test('direct explore navigation detects the catalog after its search UI loads', () => {
+  const app = run('/explore');
+  assert.equal(app.diagnostic().state, 'playground-entry');
+  app.showSearch(true);
+  assert.equal(app.diagnostic().state, 'playground-entry');
+  app.showSearch();
+  assert.equal(app.diagnostic().state, 'playground-ready');
+  assert.equal(app.clicks, 0);
+  assert.equal(app.timers.size, 0);
+});
+
+test('direct explore waits for profile setup before declaring the catalog ready', () => {
+  const app = run('/explore');
+  app.setupProfile(true);
+  app.showSearch();
+  assert.equal(app.diagnostic().state, 'playground-setup');
+  app.advance(90000);
+  app.setupProfile(false);
+  assert.equal(app.diagnostic().state, 'playground-ready');
 });
 
 const userscript = fs.readFileSync(path.join(__dirname, '../tampermonkey/unlock-flow.user.js'), 'utf8');
